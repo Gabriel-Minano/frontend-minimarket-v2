@@ -24,6 +24,7 @@ export class Categorias implements OnInit {
   //Campos del formulario
   nombre = '';
   descripcion = '';
+  idEditando: number | null = null;
   guardando = signal(false);
   mensajeRegistro = signal('');
   mensajeError = signal('');
@@ -76,7 +77,7 @@ export class Categorias implements OnInit {
     }
   }
 
-  registrarCategoria(): void {
+  guardarCategoria(): void {
     if (this.cargando() || !this.esAdmin()) {
       return;
     }
@@ -95,13 +96,23 @@ export class Categorias implements OnInit {
     }
 
     if (categoria.nombre.length > 100 || categoria.descripcion.length > 500) {
-      this.errorRegistro.set('Uno de los campos supera la longitud permitida.');
+      this.errorRegistro.set('Se superó la longitud permitida.');
       return;
     }
 
+    //identificar si se esta editando o creando
+    const id = this.idEditando;
+
+    //conservar la página actual cuando se termina de editar
+    const paginaRecargar = id === null ? 0 : this.paginaActual();
+
+    const peticion = id === null
+      ? this.categoriaService.crearCategoria(categoria)
+      : this.categoriaService.actualizarCategoria(id, categoria);
+
     this.guardando.set(true);
 
-    this.categoriaService.crearCategoria(categoria).subscribe({
+    peticion.subscribe({
       next: (respuesta) => {
         this.guardando.set(false);
         if (!respuesta.success || !respuesta.data) {
@@ -109,26 +120,53 @@ export class Categorias implements OnInit {
           return;
         }
 
+        this.cancelarEdicion();
         this.mensajeRegistro.set(respuesta.message);
-        this.nombre = '';
-        this.descripcion = '';
-        this.cargarCategorias(0);
+        this.cargarCategorias(paginaRecargar);
       },
 
       error: (err: HttpErrorResponse) => {
         this.guardando.set(false);
         const errores = err.error?.data;
+        this.mensajeRegistro.set('');
 
         if (err.status === 400 && errores && typeof errores === 'object') {
           this.errorRegistro.set(Object.values(errores).join(' '));
         } else if (err.status === 403) {
-          this.errorRegistro.set('No tienes permiso para registrar categorías.');
+          this.errorRegistro.set('No tienes permiso para guardar categorías.');
+        } else if (err.status === 404) {
+          this.errorRegistro.set('La categoría que intentas actualizar no existe');
         } else if (err.status === 0) {
           this.errorRegistro.set('No se pudo conectar con el servidor.');
         } else {
-          this.errorRegistro.set(err.error?.message || 'Error al registrar la categoría.');
+          this.errorRegistro.set(err.error?.message || 'Error al guardar la categoría.');
         }
       }
     });
+  }
+
+  editarCategoria(categoria: Categoria): void {
+    if (!this.esAdmin() || this.guardando()) {
+      return;
+    }
+
+    this.idEditando = categoria.id;
+    this.nombre = categoria.nombre;
+    this.descripcion = categoria.descripcion;
+
+    this.mensajeRegistro.set('');
+    this.errorRegistro.set('');
+  }
+
+  cancelarEdicion(): void {
+    if (this.guardando()) {
+      return;
+    }
+
+    this.idEditando = null;
+    this.nombre = '';
+    this.descripcion = '';
+    this.mensajeError.set('');
+    this.errorRegistro.set('');
   }
 }

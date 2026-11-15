@@ -4,8 +4,8 @@
 
 @if (esAdmin()){
 <section>
-    <h2>Registrar categorías</h2>
-    <form #formCategoria="ngForm" (ngSubmit)="registrarCategoria()">
+    <h2> {{ idEditando === null ? 'Registrar categoría' : 'Editar categoría' }}</h2>
+    <form #formCategoria="ngForm" (ngSubmit)="guardarCategoria()">
         <div>
             <label for="nombre">Nombre</label>
             <input id="nombre" type="text" name="nombre" [(ngModel)]="nombre" maxlength="100" required="" />
@@ -27,8 +27,17 @@
 
         <button type="submit"
             [disabled]="formCategoria.invalid || guardando() || !nombre.trim() || !descripcion.trim()">
-            {{ guardando() ? 'Guardando...' : 'Guardar categoría'}}
+
+            @if (guardando()) {
+            Guardando...
+            } @else {
+            {{ idEditando === null ? 'Guardar categoría' : 'Guardar cambios' }}
+            }
         </button>
+
+        @if (idEditando != null) {
+        <button type="button" (click)="cancelarEdicion()" [disabled]="guardando()">Cancelar</button>
+        }
     </form>
 </section>
 }
@@ -52,6 +61,7 @@
             <th>Nombre</th>
             <th>Descripción</th>
             <th>Estado</th>
+            @if (esAdmin()) {<th>Acciones</th>}
         </tr>
     </thead>
     <tbody>
@@ -63,10 +73,14 @@
             <td>
                 {{ categoria.activo ? 'Activo' : 'Inactivo' }}
             </td>
+            @if (esAdmin()) {
+            <td><button type="button" (click)="editarCategoria(categoria)" [disabled]="guardando()">Editar</button></td>
+            }
+
         </tr>
         } @empty {
         <tr>
-            <td colspan="4">
+            <td [attr.colspan]="esAdmin() ? 5 : 4">
                 No se encontraron categorías
             </td>
         </tr>

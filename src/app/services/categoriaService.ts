@@ -45,4 +45,8 @@ export class CategoriaService {
         return this.http.post<ApiResponse<Categoria>>(`${API_URL}/categorias`, categoria);
     }
 
+    //actualizar categoría
+    actualizarCategoria(id: number, categoria: CategoriaRequest){
+        return this.http.put<ApiResponse<Categoria>>(`${API_URL}/categorias/${id}`, categoria);
+    }
 }
