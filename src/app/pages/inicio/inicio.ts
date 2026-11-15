@@ -1,11 +1,11 @@
 import { Component, inject, signal } from '@angular/core';
 import { AuthService } from '../../auth/auth.service';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
-import { Router } from '@angular/router';
+import { Router, RouterLink } from '@angular/router';
 import { API_URL } from '../../config/api.config';
 
 @Component({
-  imports: [],
+  imports: [RouterLink],
   selector: 'app-inicio',
   styleUrl: './inicio.css',
   templateUrl: './inicio.html',
