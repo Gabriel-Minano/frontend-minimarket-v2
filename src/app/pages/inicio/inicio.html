@@ -1,0 +1,18 @@
+<h1>Minimarket</h1>
+
+@if (auth.usuario(); as usuario) {
+    <p>Bienvenido: {{ usuario.email }}</p>
+    <p>Roles: {{ usuario.roles.join(', ') }}</p>
+}
+
+<button type="button" (click)="probarApi()">
+    Probar petición protegida
+</button>
+
+<button type="button" (click)="salir()">
+    Cerrar sesión
+</button>
+
+@if (mensaje()) {
+    <p>{{ mensaje() }}</p>
+}
