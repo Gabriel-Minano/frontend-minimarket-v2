@@ -2,6 +2,37 @@
 
 <p>Listado de categorías registradas</p>
 
+@if (esAdmin()){
+<section>
+    <h2>Registrar categorías</h2>
+    <form #formCategoria="ngForm" (ngSubmit)="registrarCategoria()">
+        <div>
+            <label for="nombre">Nombre</label>
+            <input id="nombre" type="text" name="nombre" [(ngModel)]="nombre" maxlength="100" required="" />
+        </div>
+
+        <div>
+            <label for="descripcion">Descripción</label>
+            <textarea id="descripcion" name="descripcion" [(ngModel)]="descripcion" maxlength="500" rows="3" ,
+                required></textarea>
+        </div>
+
+        @if (mensajeRegistro()){
+        <p role="status">{{ mensajeRegistro() }}</p>
+        }
+
+        @if (errorRegistro()){
+        <p role="alert">{{ errorRegistro() }}</p>
+        }
+
+        <button type="submit"
+            [disabled]="formCategoria.invalid || guardando() || !nombre.trim() || !descripcion.trim()">
+            {{ guardando() ? 'Guardando...' : 'Guardar categoría'}}
+        </button>
+    </form>
+</section>
+}
+
 <!--Mensaje de carga-->
 @if (cargando()){
 <p>Cargando categorias...</p>
@@ -50,6 +81,7 @@
         Página {{ totalPaginas() === 0 ? 0: paginaActual() + 1}} de {{ totalPaginas() }}
     </span>
 
-    <button type="button" (click)="siguientePagina()" [disabled]="paginaActual() + 1 >= totalPaginas()">Siguiente</button>
+    <button type="button" (click)="siguientePagina()"
+        [disabled]="paginaActual() + 1 >= totalPaginas()">Siguiente</button>
 </div>
 }

@@ -9,6 +9,11 @@ export interface Categoria {
     activo: boolean;
 }
 
+export interface CategoriaRequest {
+    nombre: string;
+    descripcion: string;
+}
+
 export interface Pagina<T> {
     content: T[];
     number: number;
@@ -31,8 +36,13 @@ export class CategoriaService {
     //listar categorías por página
     listarCategorias(pagina: number = 0){
         return this.http.get<ApiResponse<Pagina<Categoria>>>(
-            `${API_URL}/categorias`, {params: {activo: true, page: pagina, size: 15}}
+            `${API_URL}/categorias`, {params: {activo: true, page: pagina, size: 15, sort: 'id,desc'}}
         );
+    }
+
+    //crear categoría
+    crearCategoria(categoria: CategoriaRequest){
+        return this.http.post<ApiResponse<Categoria>>(`${API_URL}/categorias`, categoria);
     }
 
 }
