@@ -1,132 +1,158 @@
-<h1>Gestión de Categorías</h1>
+<section class="categorias">
+    <h1>Gestión de Categorías</h1>
 
-<p>Listado de categorías registradas</p>
-@if (esAdmin() && mostrandoActivas){
-<section>
-    <h2> {{ idEditando === null ? 'Registrar categoría' : 'Editar categoría' }}</h2>
-    <form #formCategoria="ngForm" (ngSubmit)="guardarCategoria()">
-        <div>
-            <label for="nombre">Nombre</label>
-            <input id="nombre" type="text" name="nombre" [(ngModel)]="nombre" maxlength="100" required="" />
-        </div>
+    <!-- Barra de búsqueda y filtro por estado -->
+    <form class="filtros" (ngSubmit)="buscarCategorias()">
+        <input type="search" name="busqueda" [(ngModel)]="busqueda" placeholder="Buscar categoría por nombre"
+            aria-label="Buscar categoría por nombre" />
 
-        <div>
-            <label for="descripcion">Descripción</label>
-            <textarea id="descripcion" name="descripcion" [(ngModel)]="descripcion" maxlength="500" rows="3" ,
-                required></textarea>
-        </div>
+        <select name="estado" aria-label="Filtrar categorías por estado" [ngModel]="mostrandoActivas"
+            (ngModelChange)="cambiarVista($event)" [disabled]="cargando() || guardando() || procesandoId() !== null">
+            <option [ngValue]="true">Activas</option>
+            <option [ngValue]="false">Inactivas</option>
+        </select>
 
-        @if (mensajeRegistro()){
-        <p role="status">{{ mensajeRegistro() }}</p>
-        }
-
-        @if (errorRegistro()){
-        <p role="alert">{{ errorRegistro() }}</p>
-        }
-
-        <button type="submit"
-            [disabled]="formCategoria.invalid || guardando() || !nombre.trim() || !descripcion.trim()">
-
-            @if (guardando()) {
-            Guardando...
-            } @else {
-            {{ idEditando === null ? 'Guardar categoría' : 'Guardar cambios' }}
-            }
+        <button type="submit" [disabled]="cargando() || guardando() || procesandoId() !== null">
+            Buscar
         </button>
 
-        @if (idEditando != null) {
-        <button type="button" (click)="cancelarEdicion()" [disabled]="guardando()">Cancelar</button>
+        @if (busquedaAplicada) {
+        <button type="button" (click)="limpiarBusqueda()" [disabled]="cargando()">
+            Limpiar
+        </button>
         }
     </form>
-</section>
-}
-<section>
-    <div>
-        <button type="button" (click)="cambiarVista(true)"
-            [disabled]="mostrandoActivas || cargando() || guardando() || procesandoId() !== null">
-            Activas
+
+    <div class="cabecera-listado">
+        @if (esAdmin() && mostrandoActivas) {
+        <button type="button" (click)="abrirFormulario()"
+            [disabled]="cargando() || guardando() || procesandoId() !== null">
+            Registrar
         </button>
-        <button type="button" (click)="cambiarVista(false)"
-            [disabled]="!mostrandoActivas || cargando() ||guardando() ||procesandoId() !== null">
-            Inactivas
+        }
+
+        <p>Listado de categorías {{ mostrandoActivas ? 'activas' : 'inactivas' }}</p>
+    </div>
+
+    <!-- Mensajes del registro y de los cambios de estado -->
+    @if (mensajeOperacion()) {
+    <p role="status">{{ mensajeOperacion() }}</p>
+    }
+
+    @if (errorOperacion()) {
+    <p role="alert">{{ errorOperacion() }}</p>
+    }
+
+    <!-- Consulta de categorías -->
+    @if (cargando()) {
+    <p>Cargando categorías...</p>
+    }
+
+    @if (errorListado()) {
+    <p role="alert">{{ errorListado() }}</p>
+    }
+
+    @if (!cargando() && !errorListado()) {
+    <div class="tabla-contenedor">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Descripción</th>
+                    <th>Estado</th>
+                    @if (esAdmin()) {
+                    <th>Acciones</th>
+                    }
+                </tr>
+            </thead>
+
+            <tbody>
+                @for (categoria of categorias(); track categoria.id) {
+                <tr>
+                    <td>{{ categoria.id }}</td>
+                    <td>{{ categoria.nombre }}</td>
+                    <td>{{ categoria.descripcion }}</td>
+                    <td>{{ categoria.activo ? 'Activo' : 'Inactivo' }}</td>
+
+                    @if (esAdmin()) {
+                    <td class="acciones">
+                        @if (categoria.activo) {
+                        <button type="button" (click)="abrirFormulario(categoria)"
+                            [disabled]="cargando() || guardando() || procesandoId() !== null">
+                            Editar
+                        </button>
+                        }
+
+                        <button type="button" (click)="cambiarEstadoCategoria(categoria)"
+                            [disabled]="cargando() || guardando() || procesandoId() !== null">
+                            @if (procesandoId() === categoria.id) {
+                            Procesando...
+                            } @else {
+                            {{ categoria.activo ? 'Desactivar' : 'Reactivar' }}
+                            }
+                        </button>
+                    </td>
+                    }
+                </tr>
+                } @empty {
+                <tr>
+                    <td [attr.colspan]="esAdmin() ? 5 : 4">
+                        No se encontraron categorías.
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Paginación -->
+    <div class="paginacion">
+        <button type="button" (click)="cambiarPagina(-1)" [disabled]="paginaActual() === 0 || cargando()">
+            Anterior
+        </button>
+
+        <span>
+            Página {{ totalPaginas() === 0 ? 0 : paginaActual() + 1 }} de {{ totalPaginas() }}
+        </span>
+
+        <button type="button" (click)="cambiarPagina(1)"
+            [disabled]="paginaActual() + 1 >= totalPaginas() || cargando()">
+            Siguiente
         </button>
     </div>
-    <!-- Resultado de DELETE y PATCH -->
-    @if (mensajeEstado()) {
-    <p role="status">{{ mensajeEstado() }}</p>
     }
-    @if (errorEstado()) {
-    <p role="alert">{{ errorEstado() }}</p>
-    }
-</section>
-<!--Mensaje de carga-->
-@if (cargando()){
-<p>Cargando categorias...</p>
-}
 
-<!--Mensaje de error-->
-@if (error()){
-<p role="alert">{{ error() }}</p>
-}
+    <!-- Formulario -->
+    <dialog #dialogCategoria (cancel)="cancelarDialogo($event)" aria-labelledby="titulo-modal">
+        <h2 id="titulo-modal">{{ idEditando === null ? 'Registrar categoría' : 'Editar categoría' }}</h2>
 
-<!--Tabla-->
-@if (!cargando() && !error()){
-<table>
-    <thead>
-        <tr>
-            <th>ID</th>
-            <th>Nombre</th>
-            <th>Descripción</th>
-            <th>Estado</th>
-            @if (esAdmin()) {<th>Acciones</th>}
-        </tr>
-    </thead>
-    <tbody>
-        @for (categoria of categorias(); track categoria.id){
-        <tr>
-            <td>{{ categoria.id }}</td>
-            <td>{{ categoria.nombre }}</td>
-            <td>{{ categoria.descripcion }}</td>
-            <td>
-                {{ categoria.activo ? 'Activo' : 'Inactivo' }}
-            </td>
-            @if (esAdmin()) {
-            <td>@if (categoria.activo){
-                <button type="button" (click)="editarCategoria(categoria)"
-                    [disabled]="guardando() || procesandoId() !== null">Editar</button>
+        <form #formCategoria="ngForm" (ngSubmit)="guardarCategoria()">
+            <div class="campo">
+                <label for="nombre">Nombre</label>
+                <input id="nombre" type="text" name="nombre" [(ngModel)]="nombre" maxlength="100" required />
+            </div>
 
-                <button type="button" (click)="desactivarCategoria(categoria)"
-                    [disabled]="guardando() || procesandoId() !== null">
-                    {{ procesandoId() === categoria.id ? 'Desactivando...' : 'Desactivar' }}
-                </button>
-                } @else {
-                <button type="button" (click)="reactivarCategoria(categoria)"
-                    [disabled]="guardando() || procesandoId() !== null">
-                    {{ procesandoId() === categoria.id ? 'Reactivando...' : 'Reactivar' }}
-                </button>
-                }
-            </td>
+            <div class="campo">
+                <label for="descripcion">Descripción</label>
+                <textarea id="descripcion" name="descripcion" [(ngModel)]="descripcion" maxlength="500" rows="3"
+                    required></textarea>
+            </div>
+
+            @if (errorFormulario()) {
+            <p role="alert">{{ errorFormulario() }}</p>
             }
 
-        </tr>
-        } @empty {
-        <tr>
-            <td [attr.colspan]="esAdmin() ? 5 : 4">
-                No se encontraron categorías
-            </td>
-        </tr>
-        }
-    </tbody>
-</table>
-<!--Botones de paginación-->
-<div>
-    <button type="button" (click)="anteriorPagina()" [disabled]="paginaActual() === 0">Anterior</button>
+            <div class="botones-formulario">
+                <button type="submit"
+                    [disabled]="formCategoria.invalid || guardando() || !nombre.trim() || !descripcion.trim()">
+                    {{ guardando() ? 'Guardando...' : (idEditando === null ? 'Guardar categoría' : 'Guardar cambios') }}
+                </button>
 
-    <span>
-        Página {{ totalPaginas() === 0 ? 0: paginaActual() + 1}} de {{ totalPaginas() }}
-    </span>
-
-    <button type="button" (click)="siguientePagina()"
-        [disabled]="paginaActual() + 1 >= totalPaginas()">Siguiente</button>
-</div>
-}
+                <button type="button" (click)="cerrarFormulario()" [disabled]="guardando()">
+                    Cancelar
+                </button>
+            </div>
+        </form>
+    </dialog>
+</section>

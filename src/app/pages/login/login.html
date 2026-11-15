@@ -12,7 +12,7 @@
     </div>
 
     @if (error()) {
-        <p role="alert">{{ error() }}</p>
+    <p role="alert">{{ error() }}</p>
     }
 
     <button type="submit" [disabled]="form.invalid || cargando()">

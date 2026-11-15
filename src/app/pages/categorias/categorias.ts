@@ -1,7 +1,8 @@
-import { Component, inject, OnInit, signal } from '@angular/core';
-import { Categoria, CategoriaRequest, CategoriaService } from '../../services/categoriaService';
+import { Component, ElementRef, OnInit, ViewChild, inject, signal } from '@angular/core';
 import { HttpErrorResponse } from '@angular/common/http';
 import { FormsModule } from '@angular/forms';
+import { Observable } from 'rxjs';
+import { Categoria, CategoriaRequest, CategoriaService } from '../../services/categoriaService';
 import { AuthService } from '../../auth/auth.service';
 
 @Component({
@@ -14,29 +15,32 @@ export class Categorias implements OnInit {
   private categoriaService = inject(CategoriaService);
   private auth = inject(AuthService);
 
-  //Campos del listado
+  @ViewChild('dialogCategoria') dialogCategoria?: ElementRef<HTMLDialogElement>;
+
+  //Listado y paginación
   categorias = signal<Categoria[]>([]);
   paginaActual = signal(0);
   totalPaginas = signal(0);
   cargando = signal(false);
-  error = signal('');
+  errorListado = signal('');
 
-  //Campos del formulario
+  //Búsqueda y filtro
+  busqueda = '';
+  busquedaAplicada = '';
+  mostrandoActivas = true;
+
+  //Formulario para registrar y editar
   nombre = '';
   descripcion = '';
   idEditando: number | null = null;
   guardando = signal(false);
-  mensajeRegistro = signal('');
-  mensajeError = signal('');
-  errorRegistro = signal('');
+  errorFormulario = signal('');
 
-  //Desactivaciones y reactivaciones
-  mostrandoActivas = true;
+  //Mensajes y operaciones sobre el estado
   procesandoId = signal<number | null>(null);
-  mensajeEstado = signal('');
-  errorEstado = signal('');
+  mensajeOperacion = signal('');
+  errorOperacion = signal('');
 
-  //Ejecución automática al cargar el componente
   ngOnInit(): void {
     this.cargarCategorias();
   }
@@ -47,84 +51,126 @@ export class Categorias implements OnInit {
 
   cargarCategorias(pagina: number = 0): void {
     this.cargando.set(true);
-    this.error.set('');
+    this.errorListado.set('');
 
-    this.categoriaService.listarCategorias(pagina, this.mostrandoActivas).subscribe({
+    this.categoriaService.listarCategorias(pagina, this.mostrandoActivas, this.busquedaAplicada).subscribe({
       next: (respuesta) => {
-        this.cargando.set(false);
-
         if (!respuesta.success || !respuesta.data) {
-          this.error.set('No se pudieron obtener las categorías');
+          this.cargando.set(false);
+          this.errorListado.set('No se pudieron obtener las categorías.');
           return;
         }
+
+        //Volver a una página válida cuando se desactiva o reactiva el último registro
         if (pagina > 0 && pagina >= respuesta.data.totalPages) {
           this.cargarCategorias(Math.max(0, respuesta.data.totalPages - 1));
           return;
         }
+
         this.categorias.set(respuesta.data.content);
         this.paginaActual.set(respuesta.data.number);
         this.totalPaginas.set(respuesta.data.totalPages);
+        this.cargando.set(false);
       },
 
       error: (err: HttpErrorResponse) => {
         this.cargando.set(false);
-        this.error.set(err.status === 0
-          ? 'No se pudo conectar al servidor.'
-          : err.error?.message || 'Error al obtener categorías.');
+        this.errorListado.set(this.obtenerMensajeError(err, 'Error al obtener categorías.'));
       }
     });
   }
 
-  siguientePagina(): void {
-    if (this.paginaActual() + 1 < this.totalPaginas()) {
-      this.cargarCategorias(this.paginaActual() + 1);
-    }
-  }
-
-  anteriorPagina(): void {
-    if (this.paginaActual() > 0) {
-      this.cargarCategorias(this.paginaActual() - 1);
-    }
-  }
-  cambiarVista(activo: boolean): void {
-    if (this.mostrandoActivas === activo || this.guardando() || this.cargando() || this.procesandoId() !== null) {
+  buscarCategorias(): void {
+    if (this.cargando() || this.guardando() || this.procesandoId() !== null) {
       return;
     }
-    this.mostrandoActivas = activo;
-    // Limpiar una posible edición anterior
-    this.cancelarEdicion();
-    this.mensajeEstado.set('');
-    this.errorEstado.set('');
+
+    this.busquedaAplicada = this.busqueda.trim();
+    this.mensajeOperacion.set('');
+    this.errorOperacion.set('');
     this.cargarCategorias(0);
   }
 
-  guardarCategoria(): void {
-    if (this.cargando() || !this.esAdmin()) {
+  limpiarBusqueda(): void {
+    this.busqueda = '';
+    this.buscarCategorias();
+  }
+
+  cambiarVista(activo: boolean): void {
+    if (this.mostrandoActivas === activo || this.cargando() || this.guardando() || this.procesandoId() !== null) {
       return;
     }
 
-    this.errorRegistro.set('');
-    this.mensajeError.set('');
+    this.mostrandoActivas = activo;
+    this.mensajeOperacion.set('');
+    this.errorOperacion.set('');
+    this.cargarCategorias(0);
+  }
+
+  cambiarPagina(desplazamiento: number): void {
+    const nuevaPagina = this.paginaActual() + desplazamiento;
+
+    if (!this.cargando() && nuevaPagina >= 0 && nuevaPagina < this.totalPaginas()) {
+      this.cargarCategorias(nuevaPagina);
+    }
+  }
+
+  abrirFormulario(categoria?: Categoria): void {
+    if (!this.esAdmin() || this.guardando() || this.procesandoId() !== null) {
+      return;
+    }
+
+    this.idEditando = categoria?.id ?? null;
+    this.nombre = categoria?.nombre ?? '';
+    this.descripcion = categoria?.descripcion ?? '';
+    this.errorFormulario.set('');
+    this.mensajeOperacion.set('');
+    this.errorOperacion.set('');
+
+    this.dialogCategoria?.nativeElement.showModal();
+  }
+
+  cerrarFormulario(): void {
+    if (this.guardando()) {
+      return;
+    }
+
+    this.dialogCategoria?.nativeElement.close();
+    this.limpiarFormulario();
+  }
+
+  cancelarDialogo(event: Event): void {
+    if (this.guardando()) {
+      event.preventDefault();
+      return;
+    }
+
+    this.limpiarFormulario();
+  }
+
+  guardarCategoria(): void {
+    if (!this.esAdmin() || this.guardando() || this.procesandoId() !== null) {
+      return;
+    }
+
+    this.errorFormulario.set('');
 
     const categoria: CategoriaRequest = {
       nombre: this.nombre.trim(),
       descripcion: this.descripcion.trim()
-    }
+    };
 
     if (!categoria.nombre || !categoria.descripcion) {
-      this.errorRegistro.set('Completa todos los campos.');
+      this.errorFormulario.set('Completa todos los campos.');
       return;
     }
 
     if (categoria.nombre.length > 100 || categoria.descripcion.length > 500) {
-      this.errorRegistro.set('Se superó la longitud permitida.');
+      this.errorFormulario.set('Se superó la longitud permitida.');
       return;
     }
 
-    //identificar si se esta editando o creando
     const id = this.idEditando;
-
-    //conservar la página actual cuando se termina de editar
     const paginaRecargar = id === null ? 0 : this.paginaActual();
 
     const peticion = id === null
@@ -136,144 +182,84 @@ export class Categorias implements OnInit {
     peticion.subscribe({
       next: (respuesta) => {
         this.guardando.set(false);
+
         if (!respuesta.success || !respuesta.data) {
-          this.errorRegistro.set('No se pudo registrar la categoría.');
+          this.errorFormulario.set('No se pudo guardar la categoría.');
           return;
         }
 
-        this.cancelarEdicion();
-        this.mensajeRegistro.set(respuesta.message);
+        this.cerrarFormulario();
+        this.mensajeOperacion.set(respuesta.message);
         this.cargarCategorias(paginaRecargar);
       },
 
       error: (err: HttpErrorResponse) => {
         this.guardando.set(false);
-        const errores = err.error?.data;
-        this.mensajeRegistro.set('');
-
-        if (err.status === 400 && errores && typeof errores === 'object') {
-          this.errorRegistro.set(Object.values(errores).join(' '));
-        } else if (err.status === 403) {
-          this.errorRegistro.set('No tienes permiso para guardar categorías.');
-        } else if (err.status === 404) {
-          this.errorRegistro.set('La categoría que intentas actualizar no existe');
-        } else if (err.status === 0) {
-          this.errorRegistro.set('No se pudo conectar con el servidor.');
-        } else {
-          this.errorRegistro.set(err.error?.message || 'Error al guardar la categoría.');
-        }
+        this.errorFormulario.set(this.obtenerMensajeError(err, 'Error al guardar la categoría.'));
       }
     });
   }
 
-  editarCategoria(categoria: Categoria): void {
-    if (!this.esAdmin() || this.guardando()) {
+  cambiarEstadoCategoria(categoria: Categoria): void {
+    if (!this.esAdmin() || this.cargando() || this.guardando() || this.procesandoId() !== null) {
       return;
     }
 
-    this.idEditando = categoria.id;
-    this.nombre = categoria.nombre;
-    this.descripcion = categoria.descripcion;
+    if (categoria.activo && !window.confirm(`¿Deseas desactivar la categoría "${categoria.nombre}"?`)) {
+      return;
+    }
 
-    this.mensajeRegistro.set('');
-    this.errorRegistro.set('');
+    const peticion: Observable<{ success: boolean; message: string }> = categoria.activo
+      ? this.categoriaService.desactivarCategoria(categoria.id)
+      : this.categoriaService.reactivarCategoria(categoria.id);
+
+    this.mensajeOperacion.set('');
+    this.errorOperacion.set('');
+    this.procesandoId.set(categoria.id);
+
+    peticion.subscribe({
+      next: (respuesta) => {
+        this.procesandoId.set(null);
+
+        if (!respuesta.success) {
+          this.errorOperacion.set(respuesta.message);
+          return;
+        }
+
+        this.mensajeOperacion.set(respuesta.message);
+        this.cargarCategorias(this.paginaActual());
+      },
+
+      error: (err: HttpErrorResponse) => {
+        this.procesandoId.set(null);
+        this.errorOperacion.set(this.obtenerMensajeError(err, 'Error al cambiar el estado de la categoría.'));
+      }
+    });
   }
 
-  cancelarEdicion(): void {
-    if (this.guardando()) {
-      return;
-    }
-
+  private limpiarFormulario(): void {
     this.idEditando = null;
     this.nombre = '';
     this.descripcion = '';
-    this.mensajeError.set('');
-    this.errorRegistro.set('');
+    this.errorFormulario.set('');
   }
 
-  desactivarCategoria(categoria: Categoria): void {
-    if (!this.esAdmin() || this.guardando() || this.procesandoId() !== null) {
-      return;
+  private obtenerMensajeError(err: HttpErrorResponse, mensajePorDefecto: string): string {
+    if (err.status === 0) {
+      return 'No se pudo conectar con el servidor.';
     }
-    const confirmar = window.confirm(
-      `¿Deseas desactivar la categoría "${categoria.nombre}"?`
-    );
-    if (!confirmar) {
-      return;
+
+    if (err.status === 403) {
+      return 'No tienes permisos para realizar esta operación.';
     }
-    this.mensajeEstado.set('');
-    this.errorEstado.set('');
-    this.procesandoId.set(categoria.id);
-    this.categoriaService.desactivarCategoria(categoria.id).subscribe({
 
-      next: (respuesta) => {
-        this.procesandoId.set(null);
-        if (!respuesta.success) {
-          this.errorEstado.set(respuesta.message);
-          return;
-        }
-        //Cancelar edición si corresponde
-        if (this.idEditando === categoria.id) {
-          this.cancelarEdicion();
-        }
-        this.mensajeEstado.set(respuesta.message);
-        //Actualizar la página actual
-        this.cargarCategorias(this.paginaActual());
-      },
+    //Spring Boot devuelve las validaciones en data
+    const validaciones = err.status === 400 ? err.error?.data : null;
 
-      error: (err: HttpErrorResponse) => {
-        this.procesandoId.set(null);
-        if (err.status === 409) {
-          this.errorEstado.set(
-            err.error?.message ||
-            'No se puede desactivar una categoría con productos activos.'
-          );
-        } else if (err.status === 404) {
-          this.errorEstado.set('La categoría no existe.');
-        } else if (err.status === 403) {
-          this.errorEstado.set('No tienes permisos para desactivar categorías.');
-        } else if (err.status === 0) {
-          this.errorEstado.set('No se pudo conectar con el servidor.');
-        } else {
-          this.errorEstado.set(err.error?.message || 'Error al desactivar la categoría.');
-        }
-      }
-    });
-  }
-
-  reactivarCategoria(categoria: Categoria): void {
-    if (!this.esAdmin() || this.guardando() || this.procesandoId() !== null) {
-      return;
+    if (validaciones && typeof validaciones === 'object' && !Array.isArray(validaciones)) {
+      return Object.values(validaciones).join(' ');
     }
-    this.mensajeEstado.set('');
-    this.errorEstado.set('');
-    this.procesandoId.set(categoria.id);
 
-    this.categoriaService.reactivarCategoria(categoria.id).subscribe({
-      next: (respuesta) => {
-        this.procesandoId.set(null);
-        if (!respuesta.success || !respuesta.data) {
-          this.errorEstado.set('No se pudo reactivar la categoría.');
-          return;
-        }
-
-        this.mensajeEstado.set(respuesta.message);
-        // Actualizar categorías inactivas
-        this.cargarCategorias(this.paginaActual());
-      },
-
-      error: (err: HttpErrorResponse) => {
-        this.procesandoId.set(null);
-        if (err.status === 404) {
-          this.errorEstado.set('La categoría no existe.');
-        } else if (err.status === 403) {
-          this.errorEstado.set('No tienes permisos para reactivar categorías.');
-        } else if (err.status === 0) {
-          this.errorEstado.set('No se pudo conectar con el servidor.');
-        } else {
-          this.errorEstado.set(err.error?.message || 'Error al reactivar la categoría.');
-        }
-      }
-    });
+    return err.error?.message || mensajePorDefecto;
   }
 }

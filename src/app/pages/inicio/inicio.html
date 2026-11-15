@@ -1,20 +1,11 @@
-<h1>Minimarket</h1>
+<h1>Inicio</h1>
 
-@if (auth.usuario(); as usuario) {
-    <p>Bienvenido: {{ usuario.email }}</p>
-    <p>Roles: {{ usuario.roles.join(', ') }}</p>
-}
+<p>Bienvenido al sistema Minimarket.</p>
 
 <button type="button" (click)="probarApi()">
     Probar petición protegida
 </button>
 
-<button type="button" (click)="salir()">
-    Cerrar sesión
-</button>
-
 @if (mensaje()) {
     <p>{{ mensaje() }}</p>
 }
-
-<a routerLink="/categorias">Gestionar Categorías</a>

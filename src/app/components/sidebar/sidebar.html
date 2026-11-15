@@ -1,0 +1,28 @@
+<aside class="barra-lateral">
+    <h2>MaxiGo POS</h2>
+
+    <nav aria-label="Navegación principal">
+        <a routerLink="/" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="activo">
+            Inicio
+        </a>
+
+        <a routerLink="/categorias" routerLinkActive="activo">
+            Categorías
+        </a>
+
+        <span class="pendiente">Productos</span>
+        <span class="pendiente">Ventas</span>
+    </nav>
+
+    <div class="usuario">
+        @if (auth.usuario(); as usuario) {
+        <p><strong>Usuario</strong></p>
+        <p class="correo">{{ usuario.email }}</p>
+        <p>{{ usuario.roles.includes('ROLE_ADMIN') ? 'Administrador' : 'Cajero' }}</p>
+        }
+
+        <button type="button" (click)="cerrarSesion()">
+            Cerrar sesión
+        </button>
+    </div>
+</aside>
