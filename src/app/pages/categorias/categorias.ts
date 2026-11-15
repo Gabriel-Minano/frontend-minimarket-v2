@@ -30,6 +30,12 @@ export class Categorias implements OnInit {
   mensajeError = signal('');
   errorRegistro = signal('');
 
+  //Desactivaciones y reactivaciones
+  mostrandoActivas = true;
+  procesandoId = signal<number | null>(null);
+  mensajeEstado = signal('');
+  errorEstado = signal('');
+
   //Ejecución automática al cargar el componente
   ngOnInit(): void {
     this.cargarCategorias();
@@ -43,12 +49,16 @@ export class Categorias implements OnInit {
     this.cargando.set(true);
     this.error.set('');
 
-    this.categoriaService.listarCategorias(pagina).subscribe({
+    this.categoriaService.listarCategorias(pagina, this.mostrandoActivas).subscribe({
       next: (respuesta) => {
         this.cargando.set(false);
 
         if (!respuesta.success || !respuesta.data) {
           this.error.set('No se pudieron obtener las categorías');
+          return;
+        }
+        if (pagina > 0 && pagina >= respuesta.data.totalPages) {
+          this.cargarCategorias(Math.max(0, respuesta.data.totalPages - 1));
           return;
         }
         this.categorias.set(respuesta.data.content);
@@ -75,6 +85,17 @@ export class Categorias implements OnInit {
     if (this.paginaActual() > 0) {
       this.cargarCategorias(this.paginaActual() - 1);
     }
+  }
+  cambiarVista(activo: boolean): void {
+    if (this.mostrandoActivas === activo || this.guardando() || this.cargando() || this.procesandoId() !== null) {
+      return;
+    }
+    this.mostrandoActivas = activo;
+    // Limpiar una posible edición anterior
+    this.cancelarEdicion();
+    this.mensajeEstado.set('');
+    this.errorEstado.set('');
+    this.cargarCategorias(0);
   }
 
   guardarCategoria(): void {
@@ -168,5 +189,91 @@ export class Categorias implements OnInit {
     this.descripcion = '';
     this.mensajeError.set('');
     this.errorRegistro.set('');
+  }
+
+  desactivarCategoria(categoria: Categoria): void {
+    if (!this.esAdmin() || this.guardando() || this.procesandoId() !== null) {
+      return;
+    }
+    const confirmar = window.confirm(
+      `¿Deseas desactivar la categoría "${categoria.nombre}"?`
+    );
+    if (!confirmar) {
+      return;
+    }
+    this.mensajeEstado.set('');
+    this.errorEstado.set('');
+    this.procesandoId.set(categoria.id);
+    this.categoriaService.desactivarCategoria(categoria.id).subscribe({
+
+      next: (respuesta) => {
+        this.procesandoId.set(null);
+        if (!respuesta.success) {
+          this.errorEstado.set(respuesta.message);
+          return;
+        }
+        //Cancelar edición si corresponde
+        if (this.idEditando === categoria.id) {
+          this.cancelarEdicion();
+        }
+        this.mensajeEstado.set(respuesta.message);
+        //Actualizar la página actual
+        this.cargarCategorias(this.paginaActual());
+      },
+
+      error: (err: HttpErrorResponse) => {
+        this.procesandoId.set(null);
+        if (err.status === 409) {
+          this.errorEstado.set(
+            err.error?.message ||
+            'No se puede desactivar una categoría con productos activos.'
+          );
+        } else if (err.status === 404) {
+          this.errorEstado.set('La categoría no existe.');
+        } else if (err.status === 403) {
+          this.errorEstado.set('No tienes permisos para desactivar categorías.');
+        } else if (err.status === 0) {
+          this.errorEstado.set('No se pudo conectar con el servidor.');
+        } else {
+          this.errorEstado.set(err.error?.message || 'Error al desactivar la categoría.');
+        }
+      }
+    });
+  }
+
+  reactivarCategoria(categoria: Categoria): void {
+    if (!this.esAdmin() || this.guardando() || this.procesandoId() !== null) {
+      return;
+    }
+    this.mensajeEstado.set('');
+    this.errorEstado.set('');
+    this.procesandoId.set(categoria.id);
+
+    this.categoriaService.reactivarCategoria(categoria.id).subscribe({
+      next: (respuesta) => {
+        this.procesandoId.set(null);
+        if (!respuesta.success || !respuesta.data) {
+          this.errorEstado.set('No se pudo reactivar la categoría.');
+          return;
+        }
+
+        this.mensajeEstado.set(respuesta.message);
+        // Actualizar categorías inactivas
+        this.cargarCategorias(this.paginaActual());
+      },
+
+      error: (err: HttpErrorResponse) => {
+        this.procesandoId.set(null);
+        if (err.status === 404) {
+          this.errorEstado.set('La categoría no existe.');
+        } else if (err.status === 403) {
+          this.errorEstado.set('No tienes permisos para reactivar categorías.');
+        } else if (err.status === 0) {
+          this.errorEstado.set('No se pudo conectar con el servidor.');
+        } else {
+          this.errorEstado.set(err.error?.message || 'Error al reactivar la categoría.');
+        }
+      }
+    });
   }
 }

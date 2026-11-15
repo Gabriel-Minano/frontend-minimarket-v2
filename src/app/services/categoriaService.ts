@@ -34,19 +34,29 @@ export class CategoriaService {
     private http = inject(HttpClient);
 
     //listar categorías por página
-    listarCategorias(pagina: number = 0){
+    listarCategorias(pagina: number = 0, activo: boolean) {
         return this.http.get<ApiResponse<Pagina<Categoria>>>(
-            `${API_URL}/categorias`, {params: {activo: true, page: pagina, size: 15, sort: 'id,desc'}}
+            `${API_URL}/categorias`, { params: { activo: activo, page: pagina, size: 15, sort: 'id,desc' } }
         );
     }
 
     //crear categoría
-    crearCategoria(categoria: CategoriaRequest){
+    crearCategoria(categoria: CategoriaRequest) {
         return this.http.post<ApiResponse<Categoria>>(`${API_URL}/categorias`, categoria);
     }
 
     //actualizar categoría
-    actualizarCategoria(id: number, categoria: CategoriaRequest){
+    actualizarCategoria(id: number, categoria: CategoriaRequest) {
         return this.http.put<ApiResponse<Categoria>>(`${API_URL}/categorias/${id}`, categoria);
+    }
+
+    //desactivar categoría
+    desactivarCategoria(id: number) {
+        return this.http.delete<ApiResponse<null>>(`${API_URL}/categorias/${id}`);
+    }
+
+    //reactivar categoría
+    reactivarCategoria(id: number) {
+        return this.http.patch<ApiResponse<Categoria>>(`${API_URL}/categorias/${id}/reactivar`, {})
     }
 }

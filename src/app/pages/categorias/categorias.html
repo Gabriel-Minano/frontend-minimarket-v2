@@ -1,8 +1,7 @@
 <h1>Gestión de Categorías</h1>
 
 <p>Listado de categorías registradas</p>
-
-@if (esAdmin()){
+@if (esAdmin() && mostrandoActivas){
 <section>
     <h2> {{ idEditando === null ? 'Registrar categoría' : 'Editar categoría' }}</h2>
     <form #formCategoria="ngForm" (ngSubmit)="guardarCategoria()">
@@ -41,7 +40,25 @@
     </form>
 </section>
 }
-
+<section>
+    <div>
+        <button type="button" (click)="cambiarVista(true)"
+            [disabled]="mostrandoActivas || cargando() || guardando() || procesandoId() !== null">
+            Activas
+        </button>
+        <button type="button" (click)="cambiarVista(false)"
+            [disabled]="!mostrandoActivas || cargando() ||guardando() ||procesandoId() !== null">
+            Inactivas
+        </button>
+    </div>
+    <!-- Resultado de DELETE y PATCH -->
+    @if (mensajeEstado()) {
+    <p role="status">{{ mensajeEstado() }}</p>
+    }
+    @if (errorEstado()) {
+    <p role="alert">{{ errorEstado() }}</p>
+    }
+</section>
 <!--Mensaje de carga-->
 @if (cargando()){
 <p>Cargando categorias...</p>
@@ -74,7 +91,21 @@
                 {{ categoria.activo ? 'Activo' : 'Inactivo' }}
             </td>
             @if (esAdmin()) {
-            <td><button type="button" (click)="editarCategoria(categoria)" [disabled]="guardando()">Editar</button></td>
+            <td>@if (categoria.activo){
+                <button type="button" (click)="editarCategoria(categoria)"
+                    [disabled]="guardando() || procesandoId() !== null">Editar</button>
+
+                <button type="button" (click)="desactivarCategoria(categoria)"
+                    [disabled]="guardando() || procesandoId() !== null">
+                    {{ procesandoId() === categoria.id ? 'Desactivando...' : 'Desactivar' }}
+                </button>
+                } @else {
+                <button type="button" (click)="reactivarCategoria(categoria)"
+                    [disabled]="guardando() || procesandoId() !== null">
+                    {{ procesandoId() === categoria.id ? 'Reactivando...' : 'Reactivar' }}
+                </button>
+                }
+            </td>
             }
 
         </tr>
