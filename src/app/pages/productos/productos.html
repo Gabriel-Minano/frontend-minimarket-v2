@@ -1,0 +1,201 @@
+<section class="productos">
+    <h1>Gestión de Productos</h1>
+
+    <!-- Barra de búsqueda y filtros -->
+    <form class="filtros" (ngSubmit)="buscarProductos()">
+        <select name="tipoBusqueda" [ngModel]="tipoBusqueda" (ngModelChange)="cambiarTipoBusqueda($event)"
+            aria-label="Tipo de búsqueda">
+            <option value="nombre">Por nombre</option>
+            <option value="categoria">Por categoría</option>
+        </select>
+
+        @if (tipoBusqueda === 'nombre') {
+        <input type="search" name="busqueda" [(ngModel)]="busqueda" placeholder="Buscar producto por nombre"
+            aria-label="Buscar producto por nombre" />
+        } @else {
+        <select name="categoriaFiltro" [(ngModel)]="categoriaFiltro" aria-label="Filtrar por categoría">
+            <option [ngValue]="null">Todas las categorías</option>
+            @for (categoria of categorias(); track categoria.id) {
+            <option [ngValue]="categoria.id">{{ categoria.nombre }}</option>
+            }
+        </select>
+        }
+
+        <select name="estado" aria-label="Filtrar productos por estado" [ngModel]="mostrandoActivos"
+            (ngModelChange)="cambiarVista($event)" [disabled]="cargando() || guardando() || procesandoId() !== null">
+            <option [ngValue]="true">Activos</option>
+            <option [ngValue]="false">Inactivos</option>
+        </select>
+
+        <button type="submit" [disabled]="cargando() || guardando() || procesandoId() !== null">
+            Buscar
+        </button>
+
+        @if (busquedaAplicada || categoriaAplicada !== null) {
+        <button type="button" (click)="limpiarBusqueda()" [disabled]="cargando()">
+            Limpiar
+        </button>
+        }
+    </form>
+
+    <div class="cabecera-listado">
+        @if (esAdmin() && mostrandoActivos) {
+        <button type="button" (click)="abrirFormulario()"
+            [disabled]="cargando() || cargandoCategorias() || guardando() || procesandoId() !== null || categoriasActivas().length === 0">
+            Registrar
+        </button>
+        }
+
+        <p>Listado de productos {{ mostrandoActivos ? 'activos' : 'inactivos' }}</p>
+    </div>
+
+    @if (errorCategorias()) {
+    <p role="alert">{{ errorCategorias() }}</p>
+    }
+
+    @if (esAdmin() && !cargandoCategorias() && !errorCategorias() && categoriasActivas().length === 0) {
+    <p>No hay categorías activas disponibles para registrar productos.</p>
+    }
+
+    <!-- Mensajes de operaciones -->
+    @if (mensajeOperacion()) {
+    <p role="status">{{ mensajeOperacion() }}</p>
+    }
+
+    @if (errorOperacion()) {
+    <p role="alert">{{ errorOperacion() }}</p>
+    }
+
+    <!-- Consulta de productos -->
+    @if (cargando()) {
+    <p>Cargando productos...</p>
+    }
+
+    @if (errorListado()) {
+    <p role="alert">{{ errorListado() }}</p>
+    }
+
+    @if (!cargando() && !errorListado()) {
+    <div class="tabla-contenedor">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nombre</th>
+                    <th>Precio</th>
+                    <th>Stock</th>
+                    <th>Categoría</th>
+                    <th>Estado</th>
+                    @if (esAdmin()) {
+                    <th>Acciones</th>
+                    }
+                </tr>
+            </thead>
+
+            <tbody>
+                @for (producto of productos(); track producto.id) {
+                <tr>
+                    <td>{{ producto.id }}</td>
+                    <td>{{ producto.nombre }}</td>
+                    <td>S/ {{ producto.precio.toFixed(2) }}</td>
+                    <td>{{ producto.stock }}</td>
+                    <td>{{ nombreCategoria(producto.idCategoria) }}</td>
+                    <td>{{ producto.activo ? 'Activo' : 'Inactivo' }}</td>
+
+                    @if (esAdmin()) {
+                    <td class="acciones">
+                        @if (producto.activo) {
+                        <button type="button" (click)="abrirFormulario(producto)"
+                            [disabled]="cargando() || cargandoCategorias() || guardando() || procesandoId() !== null">
+                            Editar
+                        </button>
+                        }
+
+                        <button type="button" (click)="cambiarEstadoProducto(producto)"
+                            [disabled]="cargando() || guardando() || procesandoId() !== null">
+                            @if (procesandoId() === producto.id) {
+                            Procesando...
+                            } @else {
+                            {{ producto.activo ? 'Desactivar' : 'Reactivar' }}
+                            }
+                        </button>
+                    </td>
+                    }
+                </tr>
+                } @empty {
+                <tr>
+                    <td [attr.colspan]="esAdmin() ? 7 : 6">
+                        No se encontraron productos.
+                    </td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <!-- Paginación -->
+    <div class="paginacion">
+        <button type="button" (click)="cambiarPagina(-1)" [disabled]="paginaActual() === 0 || cargando()">
+            Anterior
+        </button>
+
+        <span>
+            Página {{ totalPaginas() === 0 ? 0 : paginaActual() + 1 }} de {{ totalPaginas() }}
+        </span>
+
+        <button type="button" (click)="cambiarPagina(1)"
+            [disabled]="paginaActual() + 1 >= totalPaginas() || cargando()">
+            Siguiente
+        </button>
+    </div>
+    }
+
+    <!-- Formulario -->
+    <dialog #dialogProducto (cancel)="cancelarDialogo($event)" aria-labelledby="titulo-modal-producto">
+        <h2 id="titulo-modal-producto">{{ idEditando === null ? 'Registrar producto' : 'Editar producto' }}</h2>
+
+        <form #formProducto="ngForm" (ngSubmit)="guardarProducto()">
+            <div class="campo">
+                <label for="nombreProducto">Nombre</label>
+                <input id="nombreProducto" type="text" name="nombre" [(ngModel)]="nombre" maxlength="150" required />
+            </div>
+
+            <div class="campo">
+                <label for="precioProducto">Precio (S/)</label>
+                <input id="precioProducto" type="number" name="precio" [(ngModel)]="precio" min="0.01" max="99999999.99"
+                    step="0.01" required />
+            </div>
+
+            <div class="campo">
+                <label for="stockProducto">Stock</label>
+                <input id="stockProducto" type="number" name="stock" [(ngModel)]="stock" min="0" max="2147483647"
+                    step="1" required />
+            </div>
+
+            <div class="campo">
+                <label for="categoriaProducto">Categoría</label>
+                <select id="categoriaProducto" name="idCategoria" [(ngModel)]="idCategoria" required>
+                    <option [ngValue]="null">Selecciona una categoría</option>
+                    @for (categoria of categoriasActivas(); track categoria.id) {
+                    <option [ngValue]="categoria.id">{{ categoria.nombre }}</option>
+                    }
+                </select>
+            </div>
+
+            @if (errorFormulario()) {
+            <p role="alert">{{ errorFormulario() }}</p>
+            }
+
+            <div class="botones-formulario">
+                <button type="submit"
+                    [disabled]="formProducto.invalid || guardando() || !nombre.trim() || idCategoria === null">
+                    {{ guardando() ? 'Guardando...' : (idEditando === null ? 'Guardar producto' : 'Guardar cambios') }}
+                </button>
+
+                <button type="button" (click)="cerrarFormulario()" [disabled]="guardando()">
+                    Cancelar
+                </button>
+            </div>
+        </form>
+    </dialog>
+</section>

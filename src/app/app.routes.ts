@@ -3,6 +3,7 @@ import { Login } from './pages/login/login';
 import { authGuard } from './auth/auth.guard';
 import { Inicio } from './pages/inicio/inicio';
 import { Categorias } from './pages/categorias/categorias';
+import { Productos } from './pages/productos/productos';
 
 export const routes: Routes = [
     {
@@ -17,6 +18,11 @@ export const routes: Routes = [
     {
         path: 'categorias',
         component: Categorias,
+        canActivate: [authGuard]
+    },
+    {
+        path: 'productos',
+        component: Productos,
         canActivate: [authGuard]
     },
     {
