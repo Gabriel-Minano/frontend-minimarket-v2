@@ -13,3 +13,16 @@ export const authGuard: CanActivateFn = () => {
 
     return router.createUrlTree(['/login']);
 }
+//Solo los administradores pueden ingresar al módulo de Usuarios
+export const adminGuard: CanActivateFn = () => {
+    const auth = inject(AuthService);
+    const router = inject(Router);
+
+    if (!auth.obtenerToken()) {
+        return router.createUrlTree(['/login']);
+    }
+
+    return auth.usuario()?.roles.includes('ROLE_ADMIN')
+        ? true
+        : router.createUrlTree(['/']);
+};

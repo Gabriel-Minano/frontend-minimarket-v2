@@ -1,10 +1,11 @@
 import { Routes } from '@angular/router';
 import { Login } from './pages/login/login';
-import { authGuard } from './auth/auth.guard';
+import { authGuard, adminGuard } from './auth/auth.guard';
 import { Inicio } from './pages/inicio/inicio';
 import { Categorias } from './pages/categorias/categorias';
 import { Productos } from './pages/productos/productos';
 import { Ventas } from './pages/ventas/ventas';
+import { Usuarios } from './pages/usuarios/usuarios';
 
 export const routes: Routes = [
     {
@@ -30,6 +31,11 @@ export const routes: Routes = [
         path: 'ventas',
         component: Ventas,
         canActivate: [authGuard]
+    },
+    {
+        path: 'usuarios',
+        component: Usuarios,
+        canActivate: [authGuard, adminGuard]
     },
     {
         path: '**',

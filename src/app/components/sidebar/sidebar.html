@@ -17,7 +17,11 @@
         <a routerLink="/ventas" routerLinkActive="activo">
             Ventas
         </a>
-        <span class="pendiente">Ventas</span>
+        @if (auth.usuario()?.roles?.includes('ROLE_ADMIN')) {
+        <a routerLink="/usuarios" routerLinkActive="activo">
+            Usuarios
+        </a>
+        }
     </nav>
 
     <div class="usuario">
