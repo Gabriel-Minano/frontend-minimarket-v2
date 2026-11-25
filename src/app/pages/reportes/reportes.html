@@ -1,0 +1,80 @@
+<section class="reportes">
+    <h1>Reporte de Ventas</h1>
+    <p>Consulta las ventas vigentes por día. Las ventas anuladas no se incluyen en los totales.</p>
+
+    <form class="filtros" (ngSubmit)="generarReporte()">
+        <div class="campo">
+            <label for="fechaInicio">Fecha de inicio</label>
+            <input id="fechaInicio" type="date" name="fechaInicio" [(ngModel)]="fechaInicio"
+                (ngModelChange)="cambiarFechas()" [disabled]="cargando() || descargando()" required />
+        </div>
+
+        <div class="campo">
+            <label for="fechaFin">Fecha final</label>
+            <input id="fechaFin" type="date" name="fechaFin" [(ngModel)]="fechaFin"
+                (ngModelChange)="cambiarFechas()" [min]="fechaInicio" [max]="fechaMaxima()"
+                [disabled]="cargando() || descargando()" required />
+        </div>
+
+        <button type="submit" [disabled]="cargando() || descargando() || !!validarFechas()">
+            {{ cargando() ? 'Generando...' : 'Generar reporte' }}
+        </button>
+    </form>
+
+    <p class="nota">El rango máximo permitido es un año desde la fecha inicial.</p>
+
+    @if (validarFechas()) {
+    <p role="alert">{{ validarFechas() }}</p>
+    }
+
+    @if (error()) {
+    <p role="alert">{{ error() }}</p>
+    }
+
+    @if (cargando()) {
+    <p>Cargando reporte...</p>
+    }
+
+    @if (reporte(); as datos) {
+    <div class="cabecera-reporte">
+        <h2>Resultados del {{ datos.fechaInicio }} al {{ datos.fechaFin }}</h2>
+        <button type="button" (click)="descargarCsv()" [disabled]="descargando() || cargando()">
+            {{ descargando() ? 'Descargando...' : 'Exportar CSV' }}
+        </button>
+    </div>
+
+    <div class="resumen">
+        <p><strong>Ventas realizadas:</strong> {{ datos.cantidadVentas }}</p>
+        <p><strong>Unidades vendidas:</strong> {{ datos.unidadesVendidas }}</p>
+        <p><strong>Total vendido:</strong> S/ {{ datos.totalVendido.toFixed(2) }}</p>
+    </div>
+
+    <h3>Ventas por día</h3>
+    <div class="tabla-contenedor">
+        <table>
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Ventas</th>
+                    <th>Unidades vendidas</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (dia of datos.ventasPorDia; track dia.fecha) {
+                <tr>
+                    <td>{{ dia.fecha }}</td>
+                    <td>{{ dia.cantidadVentas }}</td>
+                    <td>{{ dia.unidadesVendidas }}</td>
+                    <td>S/ {{ dia.totalVendido.toFixed(2) }}</td>
+                </tr>
+                } @empty {
+                <tr>
+                    <td colspan="4">No se registraron ventas vigentes en este periodo.</td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+    }
+</section>

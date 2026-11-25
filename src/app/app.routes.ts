@@ -6,6 +6,7 @@ import { Categorias } from './pages/categorias/categorias';
 import { Productos } from './pages/productos/productos';
 import { Ventas } from './pages/ventas/ventas';
 import { Usuarios } from './pages/usuarios/usuarios';
+import { Reportes } from './pages/reportes/reportes';
 
 export const routes: Routes = [
     {
@@ -35,6 +36,11 @@ export const routes: Routes = [
     {
         path: 'usuarios',
         component: Usuarios,
+        canActivate: [authGuard, adminGuard]
+    },
+    {
+        path: 'reportes',
+        component: Reportes,
         canActivate: [authGuard, adminGuard]
     },
     {

@@ -1,0 +1,58 @@
+.reportes {
+    max-width: 1100px;
+}
+
+.filtros {
+    display: flex;
+    align-items: end;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin: 20px 0 8px;
+}
+
+.campo label {
+    display: block;
+    margin-bottom: 5px;
+}
+
+.nota {
+    color: #555;
+}
+
+.cabecera-reporte {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-top: 22px;
+}
+
+.cabecera-reporte h2 {
+    margin: 0;
+}
+
+.resumen {
+    border: 1px solid grey;
+    padding: 10px 16px;
+    margin: 16px 0;
+}
+
+.resumen p {
+    margin: 7px 0;
+}
+
+.tabla-contenedor {
+    overflow-x: auto;
+}
+
+table {
+    border-collapse: collapse;
+    width: 100%;
+}
+
+th, td {
+    border: 1px solid grey;
+    padding: 10px;
+    text-align: left;
+}
