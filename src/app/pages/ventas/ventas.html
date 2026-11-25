@@ -1,0 +1,261 @@
+<section class="ventas">
+    <h1>Gestión de Ventas</h1>
+
+    <!-- Filtro del historial -->
+    <div class="filtros">
+        <label for="estadoVenta">Estado</label>
+        <select id="estadoVenta" name="estado" [ngModel]="mostrandoActivas" (ngModelChange)="cambiarVista($event)"
+            [disabled]="cargando() || procesandoId() !== null">
+            <option [ngValue]="true">Activas</option>
+            <option [ngValue]="false">Anuladas</option>
+        </select>
+    </div>
+
+    <div class="cabecera-listado">
+        <button type="button" (click)="abrirFormulario()"
+            [disabled]="cargando() || guardando() || procesandoId() !== null">
+            Registrar venta
+        </button>
+        <p>Listado de ventas {{ mostrandoActivas ? 'activas' : 'anuladas' }}</p>
+    </div>
+
+    @if (mensajeOperacion()) {
+    <p role="status">{{ mensajeOperacion() }}</p>
+    }
+
+    @if (errorOperacion()) {
+    <p role="alert">{{ errorOperacion() }}</p>
+    }
+
+    @if (cargando()) {
+    <p>Cargando ventas...</p>
+    }
+
+    @if (errorListado()) {
+    <p role="alert">{{ errorListado() }}</p>
+    }
+
+    @if (!cargando() && !errorListado()) {
+    <div class="tabla-contenedor">
+        <table>
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Fecha</th>
+                    <th>Vendedor</th>
+                    <th>Total</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @for (venta of ventas(); track venta.idVenta) {
+                <tr>
+                    <td>{{ venta.idVenta }}</td>
+                    <td>{{ formatearFecha(venta.fechaVenta) }}</td>
+                    <td>{{ venta.nombreUsuario }}</td>
+                    <td>S/ {{ venta.total.toFixed(2) }}</td>
+                    <td>{{ venta.activo ? 'Activa' : 'Anulada' }}</td>
+                    <td class="acciones">
+                        <button type="button" (click)="verDetalle(venta)" [disabled]="procesandoId() !== null">
+                            Ver detalle
+                        </button>
+
+                        @if (esAdmin() && venta.activo) {
+                        <button type="button" (click)="anularVenta(venta)" [disabled]="procesandoId() !== null">
+                            {{ procesandoId() === venta.idVenta ? 'Anulando...' : 'Anular' }}
+                        </button>
+                        }
+                    </td>
+                </tr>
+                } @empty {
+                <tr>
+                    <td colspan="6">No se encontraron ventas.</td>
+                </tr>
+                }
+            </tbody>
+        </table>
+    </div>
+
+    <div class="paginacion">
+        <button type="button" (click)="cambiarPagina(-1)" [disabled]="paginaActual() === 0 || cargando()">
+            Anterior
+        </button>
+        <span>Página {{ totalPaginas() === 0 ? 0 : paginaActual() + 1 }} de {{ totalPaginas() }}</span>
+        <button type="button" (click)="cambiarPagina(1)"
+            [disabled]="paginaActual() + 1 >= totalPaginas() || cargando()">
+            Siguiente
+        </button>
+    </div>
+    }
+
+    <!-- Registro de venta -->
+    <dialog #dialogVenta (cancel)="cancelarFormulario($event)" aria-labelledby="tituloRegistroVenta">
+        <h2 id="tituloRegistroVenta">Registrar venta</h2>
+        <p>Selecciona los productos y cantidades. El vendedor se asigna automáticamente.</p>
+
+        <h3>Productos disponibles</h3>
+        <form class="filtros" (ngSubmit)="buscarProductos()">
+            <input type="search" name="nombreProducto" [(ngModel)]="busquedaProducto"
+                placeholder="Buscar producto por nombre" aria-label="Buscar producto" />
+            <button type="submit" [disabled]="cargandoProductos() || guardando()">Buscar</button>
+            @if (busquedaAplicada) {
+            <button type="button" (click)="busquedaProducto = ''; buscarProductos()"
+                [disabled]="cargandoProductos() || guardando()">
+                Limpiar
+            </button>
+            }
+        </form>
+
+        @if (cargandoProductos()) {
+        <p>Cargando productos...</p>
+        }
+
+        @if (errorProductos()) {
+        <p role="alert">{{ errorProductos() }}</p>
+        }
+
+        @if (!cargandoProductos() && !errorProductos()) {
+        <div class="tabla-contenedor">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Precio</th>
+                        <th>Stock</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (producto of productos(); track producto.id) {
+                    <tr>
+                        <td>{{ producto.nombre }}</td>
+                        <td>S/ {{ producto.precio.toFixed(2) }}</td>
+                        <td>{{ producto.stock }}</td>
+                        <td>
+                            <button type="button" (click)="agregarProducto(producto)"
+                                [disabled]="guardando() || producto.stock <= 0">
+                                Agregar
+                            </button>
+                        </td>
+                    </tr>
+                    } @empty {
+                    <tr>
+                        <td colspan="4">No se encontraron productos activos.</td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <div class="paginacion">
+            <button type="button" (click)="cambiarPaginaProductos(-1)"
+                [disabled]="paginaProductos() === 0 || cargandoProductos() || guardando()">Anterior</button>
+            <span>Página {{ totalPaginasProductos() === 0 ? 0 : paginaProductos() + 1 }} de {{ totalPaginasProductos()
+                }}</span>
+            <button type="button" (click)="cambiarPaginaProductos(1)"
+                [disabled]="paginaProductos() + 1 >= totalPaginasProductos() || cargandoProductos() || guardando()">Siguiente</button>
+        </div>
+        }
+
+        <h3>Carrito</h3>
+        <div class="tabla-contenedor">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Subtotal</th>
+                        <th>Acción</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (item of carrito(); track item.producto.id) {
+                    <tr>
+                        <td>{{ item.producto.nombre }}</td>
+                        <td>
+                            <input type="number" class="cantidad" [min]="1" [max]="item.producto.stock" step="1"
+                                [ngModel]="item.cantidad" (ngModelChange)="cambiarCantidad(item.producto.id, $event)"
+                                [disabled]="guardando()" [attr.aria-label]="'Cantidad de ' + item.producto.nombre" />
+                            <small>Disponible: {{ item.producto.stock }}</small>
+                        </td>
+                        <td>S/ {{ subtotal(item).toFixed(2) }}</td>
+                        <td>
+                            <button type="button" (click)="quitarProducto(item.producto.id)" [disabled]="guardando()">
+                                Quitar
+                            </button>
+                        </td>
+                    </tr>
+                    } @empty {
+                    <tr>
+                        <td colspan="4">Todavía no agregaste productos.</td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+
+        <p class="total"><strong>Total: S/ {{ totalCarrito().toFixed(2) }}</strong></p>
+
+        @if (carrito().length > 0 && !carritoValido()) {
+        <p role="alert">Las cantidades deben ser números enteros, mayores a cero y no superar el stock.</p>
+        }
+
+        @if (errorFormulario()) {
+        <p role="alert">{{ errorFormulario() }}</p>
+        }
+
+        <div class="botones-formulario">
+            <button type="button" (click)="registrarVenta()" [disabled]="guardando() || !carritoValido()">
+                {{ guardando() ? 'Registrando...' : 'Confirmar venta' }}
+            </button>
+            <button type="button" (click)="cerrarFormulario()" [disabled]="guardando()">Cancelar</button>
+        </div>
+    </dialog>
+
+    <!-- Detalle de una venta -->
+    <dialog #dialogDetalle aria-labelledby="tituloDetalleVenta">
+        <h2 id="tituloDetalleVenta">Detalle de venta</h2>
+
+        @if (cargandoDetalle()) {
+        <p>Cargando detalle...</p>
+        }
+
+        @if (errorDetalle()) {
+        <p role="alert">{{ errorDetalle() }}</p>
+        }
+
+        @if (ventaDetalle(); as venta) {
+        <p><strong>Venta N.°:</strong> {{ venta.idVenta }}</p>
+        <p><strong>Fecha:</strong> {{ formatearFecha(venta.fechaVenta) }}</p>
+        <p><strong>Vendedor:</strong> {{ venta.nombreUsuario }}</p>
+        <p><strong>Estado:</strong> {{ venta.activo ? 'Activa' : 'Anulada' }}</p>
+
+        <div class="tabla-contenedor">
+            <table>
+                <thead>
+                    <tr>
+                        <th>Producto</th>
+                        <th>Cantidad</th>
+                        <th>Precio unitario</th>
+                        <th>Subtotal</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    @for (detalle of venta.detalles; track detalle.idDetalleVenta) {
+                    <tr>
+                        <td>{{ detalle.nombreProducto }}</td>
+                        <td>{{ detalle.cantidad }}</td>
+                        <td>S/ {{ detalle.precioUnitario.toFixed(2) }}</td>
+                        <td>S/ {{ detalle.subtotal.toFixed(2) }}</td>
+                    </tr>
+                    }
+                </tbody>
+            </table>
+        </div>
+        <p class="total"><strong>Total: S/ {{ venta.total.toFixed(2) }}</strong></p>
+        }
+
+        <button type="button" (click)="cerrarDetalle()">Cerrar</button>
+    </dialog>
+</section>

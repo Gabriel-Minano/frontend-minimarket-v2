@@ -4,6 +4,7 @@ import { authGuard } from './auth/auth.guard';
 import { Inicio } from './pages/inicio/inicio';
 import { Categorias } from './pages/categorias/categorias';
 import { Productos } from './pages/productos/productos';
+import { Ventas } from './pages/ventas/ventas';
 
 export const routes: Routes = [
     {
@@ -23,6 +24,11 @@ export const routes: Routes = [
     {
         path: 'productos',
         component: Productos,
+        canActivate: [authGuard]
+    },
+    {
+        path: 'ventas',
+        component: Ventas,
         canActivate: [authGuard]
     },
     {
