@@ -1,34 +1,34 @@
-<section class="reportes">
-    <h1>Reporte de Ventas</h1>
-    <p>Consulta las ventas vigentes por día. Las ventas anuladas no se incluyen en los totales.</p>
+<section class="mx-auto max-w-7xl space-y-5">
+    <h1 class="titulo-pagina">Reporte de Ventas</h1>
+    <p class="text-gray-600">Consulta las ventas vigentes por día. Las ventas anuladas no se incluyen en los totales.</p>
 
-    <form class="filtros" (ngSubmit)="generarReporte()">
+    <form class="filtros items-end" (ngSubmit)="generarReporte()">
         <div class="campo">
             <label for="fechaInicio">Fecha de inicio</label>
-            <input id="fechaInicio" type="date" name="fechaInicio" [(ngModel)]="fechaInicio"
+            <input class="control" id="fechaInicio" type="date" name="fechaInicio" [(ngModel)]="fechaInicio"
                 (ngModelChange)="cambiarFechas()" [disabled]="cargando() || descargando()" required />
         </div>
 
         <div class="campo">
             <label for="fechaFin">Fecha final</label>
-            <input id="fechaFin" type="date" name="fechaFin" [(ngModel)]="fechaFin"
+            <input class="control" id="fechaFin" type="date" name="fechaFin" [(ngModel)]="fechaFin"
                 (ngModelChange)="cambiarFechas()" [min]="fechaInicio" [max]="fechaMaxima()"
                 [disabled]="cargando() || descargando()" required />
         </div>
 
-        <button type="submit" [disabled]="cargando() || descargando() || !!validarFechas()">
+        <button class="boton boton-primario" type="submit" [disabled]="cargando() || descargando() || !!validarFechas()">
             {{ cargando() ? 'Generando...' : 'Generar reporte' }}
         </button>
     </form>
 
-    <p class="nota">El rango máximo permitido es un año desde la fecha inicial.</p>
+    <p class="text-sm text-gray-600">El rango máximo permitido es un año desde la fecha inicial.</p>
 
     @if (validarFechas()) {
-    <p role="alert">{{ validarFechas() }}</p>
+    <p class="mensaje" role="alert">{{ validarFechas() }}</p>
     }
 
     @if (error()) {
-    <p role="alert">{{ error() }}</p>
+    <p class="mensaje" role="alert">{{ error() }}</p>
     }
 
     @if (cargando()) {
@@ -36,21 +36,30 @@
     }
 
     @if (reporte(); as datos) {
-    <div class="cabecera-reporte">
-        <h2>Resultados del {{ datos.fechaInicio }} al {{ datos.fechaFin }}</h2>
-        <button type="button" (click)="descargarCsv()" [disabled]="descargando() || cargando()">
+    <div class="flex flex-wrap items-center justify-between gap-3">
+        <h2 class="text-xl font-bold">Resultados del {{ datos.fechaInicio }} al {{ datos.fechaFin }}</h2>
+        <button class="boton boton-primario" type="button" (click)="descargarCsv()" [disabled]="descargando() || cargando()">
             {{ descargando() ? 'Descargando...' : 'Exportar CSV' }}
         </button>
     </div>
 
-    <div class="resumen">
-        <p><strong>Ventas realizadas:</strong> {{ datos.cantidadVentas }}</p>
-        <p><strong>Unidades vendidas:</strong> {{ datos.unidadesVendidas }}</p>
-        <p><strong>Total vendido:</strong> S/ {{ datos.totalVendido.toFixed(2) }}</p>
-    </div>
+    <dl class="grid gap-3 sm:grid-cols-3">
+        <div class="rounded-lg border border-orange-200 bg-orange-50 p-4 text-orange-900">
+            <dt class="text-sm font-medium">Total vendido</dt>
+            <dd class="mt-1 text-2xl font-bold tabular-nums">S/ {{ datos.totalVendido.toFixed(2) }}</dd>
+        </div>
+        <div class="rounded-lg border border-gray-200 bg-white p-4">
+            <dt class="text-sm font-medium text-gray-600">Ventas realizadas</dt>
+            <dd class="mt-1 text-2xl font-bold tabular-nums">{{ datos.cantidadVentas }}</dd>
+        </div>
+        <div class="rounded-lg border border-gray-200 bg-white p-4">
+            <dt class="text-sm font-medium text-gray-600">Unidades vendidas</dt>
+            <dd class="mt-1 text-2xl font-bold tabular-nums">{{ datos.unidadesVendidas }}</dd>
+        </div>
+    </dl>
 
-    <h3>Ventas por día</h3>
-    <div class="tabla-contenedor">
+    <h3 class="text-lg font-semibold">Ventas por día</h3>
+    <div class="tabla-contenedor" tabindex="0" role="region" aria-label="Ventas por día">
         <table>
             <thead>
                 <tr>
@@ -64,9 +73,9 @@
                 @for (dia of datos.ventasPorDia; track dia.fecha) {
                 <tr>
                     <td>{{ dia.fecha }}</td>
-                    <td>{{ dia.cantidadVentas }}</td>
-                    <td>{{ dia.unidadesVendidas }}</td>
-                    <td>S/ {{ dia.totalVendido.toFixed(2) }}</td>
+                    <td class="whitespace-nowrap tabular-nums">{{ dia.cantidadVentas }}</td>
+                    <td class="whitespace-nowrap tabular-nums">{{ dia.unidadesVendidas }}</td>
+                    <td class="whitespace-nowrap tabular-nums">S/ {{ dia.totalVendido.toFixed(2) }}</td>
                 </tr>
                 } @empty {
                 <tr>

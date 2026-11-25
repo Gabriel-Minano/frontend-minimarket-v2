@@ -1,10 +1,10 @@
-<section class="ventas">
-    <h1>Gestión de Ventas</h1>
+<section class="mx-auto max-w-7xl space-y-5">
+    <h1 class="titulo-pagina">Gestión de Ventas</h1>
 
     <!-- Filtro del historial -->
     <div class="filtros">
         <label for="estadoVenta">Estado</label>
-        <select id="estadoVenta" name="estado" [ngModel]="mostrandoActivas" (ngModelChange)="cambiarVista($event)"
+        <select class="control" id="estadoVenta" name="estado" [ngModel]="mostrandoActivas" (ngModelChange)="cambiarVista($event)"
             [disabled]="cargando() || procesandoId() !== null">
             <option [ngValue]="true">Activas</option>
             <option [ngValue]="false">Anuladas</option>
@@ -12,7 +12,7 @@
     </div>
 
     <div class="cabecera-listado">
-        <button type="button" (click)="abrirFormulario()"
+        <button class="boton boton-primario" type="button" (click)="abrirFormulario()"
             [disabled]="cargando() || guardando() || procesandoId() !== null">
             Registrar venta
         </button>
@@ -20,11 +20,11 @@
     </div>
 
     @if (mensajeOperacion()) {
-    <p role="status">{{ mensajeOperacion() }}</p>
+    <p class="mensaje" role="status">{{ mensajeOperacion() }}</p>
     }
 
     @if (errorOperacion()) {
-    <p role="alert">{{ errorOperacion() }}</p>
+    <p class="mensaje" role="alert">{{ errorOperacion() }}</p>
     }
 
     @if (cargando()) {
@@ -32,11 +32,11 @@
     }
 
     @if (errorListado()) {
-    <p role="alert">{{ errorListado() }}</p>
+    <p class="mensaje" role="alert">{{ errorListado() }}</p>
     }
 
     @if (!cargando() && !errorListado()) {
-    <div class="tabla-contenedor">
+    <div class="tabla-contenedor" tabindex="0" role="region" aria-label="Historial de ventas">
         <table>
             <thead>
                 <tr>
@@ -54,15 +54,20 @@
                     <td>{{ venta.idVenta }}</td>
                     <td>{{ formatearFecha(venta.fechaVenta) }}</td>
                     <td>{{ venta.nombreUsuario }}</td>
-                    <td>S/ {{ venta.total.toFixed(2) }}</td>
-                    <td>{{ venta.activo ? 'Activa' : 'Anulada' }}</td>
+                    <td class="whitespace-nowrap tabular-nums">S/ {{ venta.total.toFixed(2) }}</td>
+                    <td>
+                        <span class="rounded-md px-2 py-1 text-xs font-semibold"
+                            [class]="venta.activo ? 'bg-green-50 text-green-800' : 'bg-gray-100 text-gray-700'">
+                            {{ venta.activo ? 'Activa' : 'Anulada' }}
+                        </span>
+                    </td>
                     <td class="acciones">
-                        <button type="button" (click)="verDetalle(venta)" [disabled]="procesandoId() !== null">
+                        <button class="boton" type="button" (click)="verDetalle(venta)" [disabled]="procesandoId() !== null">
                             Ver detalle
                         </button>
 
                         @if (esAdmin() && venta.activo) {
-                        <button type="button" (click)="anularVenta(venta)" [disabled]="procesandoId() !== null">
+                        <button class="boton boton-peligro" type="button" (click)="anularVenta(venta)" [disabled]="procesandoId() !== null">
                             {{ procesandoId() === venta.idVenta ? 'Anulando...' : 'Anular' }}
                         </button>
                         }
@@ -78,11 +83,11 @@
     </div>
 
     <div class="paginacion">
-        <button type="button" (click)="cambiarPagina(-1)" [disabled]="paginaActual() === 0 || cargando()">
+        <button class="boton" type="button" (click)="cambiarPagina(-1)" [disabled]="paginaActual() === 0 || cargando()">
             Anterior
         </button>
         <span>Página {{ totalPaginas() === 0 ? 0 : paginaActual() + 1 }} de {{ totalPaginas() }}</span>
-        <button type="button" (click)="cambiarPagina(1)"
+        <button class="boton" type="button" (click)="cambiarPagina(1)"
             [disabled]="paginaActual() + 1 >= totalPaginas() || cargando()">
             Siguiente
         </button>
@@ -90,17 +95,17 @@
     }
 
     <!-- Registro de venta -->
-    <dialog #dialogVenta (cancel)="cancelarFormulario($event)" aria-labelledby="tituloRegistroVenta">
+    <dialog class="dialogo max-w-4xl" #dialogVenta (cancel)="cancelarFormulario($event)" aria-labelledby="tituloRegistroVenta">
         <h2 id="tituloRegistroVenta">Registrar venta</h2>
-        <p>Selecciona los productos y cantidades. El vendedor se asigna automáticamente.</p>
+        <p class="text-sm text-gray-600">Selecciona los productos y cantidades. El vendedor se asigna automáticamente.</p>
 
-        <h3>Productos disponibles</h3>
+        <h3 class="border-t border-gray-200 pt-4 text-lg font-semibold">Productos disponibles</h3>
         <form class="filtros" (ngSubmit)="buscarProductos()">
-            <input type="search" name="nombreProducto" [(ngModel)]="busquedaProducto"
+            <input class="control" type="search" name="nombreProducto" [(ngModel)]="busquedaProducto"
                 placeholder="Buscar producto por nombre" aria-label="Buscar producto" />
-            <button type="submit" [disabled]="cargandoProductos() || guardando()">Buscar</button>
+            <button class="boton" type="submit" [disabled]="cargandoProductos() || guardando()">Buscar</button>
             @if (busquedaAplicada) {
-            <button type="button" (click)="busquedaProducto = ''; buscarProductos()"
+            <button class="boton" type="button" (click)="busquedaProducto = ''; buscarProductos()"
                 [disabled]="cargandoProductos() || guardando()">
                 Limpiar
             </button>
@@ -112,11 +117,11 @@
         }
 
         @if (errorProductos()) {
-        <p role="alert">{{ errorProductos() }}</p>
+        <p class="mensaje" role="alert">{{ errorProductos() }}</p>
         }
 
         @if (!cargandoProductos() && !errorProductos()) {
-        <div class="tabla-contenedor">
+        <div class="tabla-contenedor" tabindex="0" role="region" aria-label="Productos disponibles">
             <table>
                 <thead>
                     <tr>
@@ -130,10 +135,10 @@
                     @for (producto of productos(); track producto.id) {
                     <tr>
                         <td>{{ producto.nombre }}</td>
-                        <td>S/ {{ producto.precio.toFixed(2) }}</td>
-                        <td>{{ producto.stock }}</td>
+                        <td class="whitespace-nowrap tabular-nums">S/ {{ producto.precio.toFixed(2) }}</td>
+                        <td class="whitespace-nowrap tabular-nums">{{ producto.stock }}</td>
                         <td>
-                            <button type="button" (click)="agregarProducto(producto)"
+                            <button class="boton boton-primario" type="button" (click)="agregarProducto(producto)"
                                 [disabled]="guardando() || producto.stock <= 0">
                                 Agregar
                             </button>
@@ -149,17 +154,17 @@
         </div>
 
         <div class="paginacion">
-            <button type="button" (click)="cambiarPaginaProductos(-1)"
+            <button class="boton" type="button" (click)="cambiarPaginaProductos(-1)"
                 [disabled]="paginaProductos() === 0 || cargandoProductos() || guardando()">Anterior</button>
             <span>Página {{ totalPaginasProductos() === 0 ? 0 : paginaProductos() + 1 }} de {{ totalPaginasProductos()
                 }}</span>
-            <button type="button" (click)="cambiarPaginaProductos(1)"
+            <button class="boton" type="button" (click)="cambiarPaginaProductos(1)"
                 [disabled]="paginaProductos() + 1 >= totalPaginasProductos() || cargandoProductos() || guardando()">Siguiente</button>
         </div>
         }
 
-        <h3>Carrito</h3>
-        <div class="tabla-contenedor">
+        <h3 class="border-t border-gray-200 pt-4 text-lg font-semibold">Carrito</h3>
+        <div class="tabla-contenedor" tabindex="0" role="region" aria-label="Carrito">
             <table>
                 <thead>
                     <tr>
@@ -174,14 +179,14 @@
                     <tr>
                         <td>{{ item.producto.nombre }}</td>
                         <td>
-                            <input type="number" class="cantidad" [min]="1" [max]="item.producto.stock" step="1"
+                            <input type="number" class="control w-20 tabular-nums" [min]="1" [max]="item.producto.stock" step="1"
                                 [ngModel]="item.cantidad" (ngModelChange)="cambiarCantidad(item.producto.id, $event)"
                                 [disabled]="guardando()" [attr.aria-label]="'Cantidad de ' + item.producto.nombre" />
-                            <small>Disponible: {{ item.producto.stock }}</small>
+                            <small class="mt-1 block whitespace-nowrap text-xs text-gray-600">Disponible: {{ item.producto.stock }}</small>
                         </td>
-                        <td>S/ {{ subtotal(item).toFixed(2) }}</td>
+                        <td class="whitespace-nowrap tabular-nums">S/ {{ subtotal(item).toFixed(2) }}</td>
                         <td>
-                            <button type="button" (click)="quitarProducto(item.producto.id)" [disabled]="guardando()">
+                            <button class="boton boton-peligro" type="button" (click)="quitarProducto(item.producto.id)" [disabled]="guardando()">
                                 Quitar
                             </button>
                         </td>
@@ -195,26 +200,26 @@
             </table>
         </div>
 
-        <p class="total"><strong>Total: S/ {{ totalCarrito().toFixed(2) }}</strong></p>
+        <p class="rounded-md border border-orange-200 bg-orange-50 px-4 py-3 text-right text-lg text-orange-900 tabular-nums"><strong>Total: S/ {{ totalCarrito().toFixed(2) }}</strong></p>
 
         @if (carrito().length > 0 && !carritoValido()) {
-        <p role="alert">Las cantidades deben ser números enteros, mayores a cero y no superar el stock.</p>
+        <p class="mensaje" role="alert">Las cantidades deben ser números enteros, mayores a cero y no superar el stock.</p>
         }
 
         @if (errorFormulario()) {
-        <p role="alert">{{ errorFormulario() }}</p>
+        <p class="mensaje" role="alert">{{ errorFormulario() }}</p>
         }
 
         <div class="botones-formulario">
-            <button type="button" (click)="registrarVenta()" [disabled]="guardando() || !carritoValido()">
+            <button class="boton boton-primario" type="button" (click)="registrarVenta()" [disabled]="guardando() || !carritoValido()">
                 {{ guardando() ? 'Registrando...' : 'Confirmar venta' }}
             </button>
-            <button type="button" (click)="cerrarFormulario()" [disabled]="guardando()">Cancelar</button>
+            <button class="boton" type="button" (click)="cerrarFormulario()" [disabled]="guardando()">Cancelar</button>
         </div>
     </dialog>
 
     <!-- Detalle de una venta -->
-    <dialog #dialogDetalle aria-labelledby="tituloDetalleVenta">
+    <dialog class="dialogo max-w-4xl" #dialogDetalle aria-labelledby="tituloDetalleVenta">
         <h2 id="tituloDetalleVenta">Detalle de venta</h2>
 
         @if (cargandoDetalle()) {
@@ -222,7 +227,7 @@
         }
 
         @if (errorDetalle()) {
-        <p role="alert">{{ errorDetalle() }}</p>
+        <p class="mensaje" role="alert">{{ errorDetalle() }}</p>
         }
 
         @if (ventaDetalle(); as venta) {
@@ -231,7 +236,7 @@
         <p><strong>Vendedor:</strong> {{ venta.nombreUsuario }}</p>
         <p><strong>Estado:</strong> {{ venta.activo ? 'Activa' : 'Anulada' }}</p>
 
-        <div class="tabla-contenedor">
+        <div class="tabla-contenedor" tabindex="0" role="region" aria-label="Productos de la venta">
             <table>
                 <thead>
                     <tr>
@@ -245,17 +250,17 @@
                     @for (detalle of venta.detalles; track detalle.idDetalleVenta) {
                     <tr>
                         <td>{{ detalle.nombreProducto }}</td>
-                        <td>{{ detalle.cantidad }}</td>
-                        <td>S/ {{ detalle.precioUnitario.toFixed(2) }}</td>
-                        <td>S/ {{ detalle.subtotal.toFixed(2) }}</td>
+                        <td class="whitespace-nowrap tabular-nums">{{ detalle.cantidad }}</td>
+                        <td class="whitespace-nowrap tabular-nums">S/ {{ detalle.precioUnitario.toFixed(2) }}</td>
+                        <td class="whitespace-nowrap tabular-nums">S/ {{ detalle.subtotal.toFixed(2) }}</td>
                     </tr>
                     }
                 </tbody>
             </table>
         </div>
-        <p class="total"><strong>Total: S/ {{ venta.total.toFixed(2) }}</strong></p>
+        <p class="rounded-md border border-orange-200 bg-orange-50 px-4 py-3 text-right text-lg text-orange-900 tabular-nums"><strong>Total: S/ {{ venta.total.toFixed(2) }}</strong></p>
         }
 
-        <button type="button" (click)="cerrarDetalle()">Cerrar</button>
+        <button class="boton" type="button" (click)="cerrarDetalle()">Cerrar</button>
     </dialog>
 </section>

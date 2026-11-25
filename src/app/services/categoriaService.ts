@@ -34,7 +34,7 @@ export class CategoriaService {
     private http = inject(HttpClient);
 
     //listar categorías por página
-    listarCategorias(pagina: number = 0, activo: boolean = true, nombre: string = '', tamano: number = 3) {
+    listarCategorias(pagina: number = 0, activo: boolean = true, nombre: string = '', tamano: number = 10) {
         return this.http.get<ApiResponse<Pagina<Categoria>>>(
             `${API_URL}/categorias`, { params: { activo: activo, nombre: nombre.trim(), page: pagina, size: tamano, sort: 'id,desc' } }
         );

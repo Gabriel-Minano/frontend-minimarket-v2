@@ -1,13 +1,13 @@
 @if (auth.usuario()) {
-<div class="estructura">
+<div class="min-h-dvh md:flex">
     <app-sidebar />
 
-    <main class="contenido">
+    <main class="min-w-0 flex-1 p-4 sm:p-6 lg:p-8">
         <router-outlet />
     </main>
 </div>
 } @else {
-<main class="contenido-login">
-    <router-outlet />
+<main class="grid min-h-dvh place-items-center p-4">
+    <router-outlet class="hidden"/>
 </main>
 }

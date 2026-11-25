@@ -1,10 +1,10 @@
-<section class="usuarios">
-    <h1>Gestión de Usuarios</h1>
+<section class="mx-auto max-w-7xl space-y-5">
+    <h1 class="titulo-pagina">Gestión de Usuarios</h1>
 
     <!-- Filtro por estado -->
     <div class="filtros">
         <label for="estadoUsuario">Estado</label>
-        <select id="estadoUsuario" name="estado" [ngModel]="mostrandoActivos"
+        <select class="control" id="estadoUsuario" name="estado" [ngModel]="mostrandoActivos"
             (ngModelChange)="cambiarVista($event)" [disabled]="cargando() || guardando() || procesandoId() !== null">
             <option [ngValue]="true">Activos</option>
             <option [ngValue]="false">Inactivos</option>
@@ -13,7 +13,7 @@
 
     <div class="cabecera-listado">
         @if (mostrandoActivos) {
-        <button type="button" (click)="abrirFormulario()"
+        <button class="boton boton-primario" type="button" (click)="abrirFormulario()"
             [disabled]="cargando() || cargandoRoles() || !!errorRoles() || roles().length === 0 || guardando() || procesandoId() !== null">
             Registrar
         </button>
@@ -23,8 +23,8 @@
     </div>
 
     @if (errorRoles()) {
-    <p role="alert">{{ errorRoles() }}</p>
-    <button type="button" (click)="cargarRoles()" [disabled]="cargandoRoles()">Reintentar roles</button>
+    <p class="mensaje" role="alert">{{ errorRoles() }}</p>
+    <button class="boton" type="button" (click)="cargarRoles()" [disabled]="cargandoRoles()">Reintentar roles</button>
     }
 
     @if (!cargandoRoles() && !errorRoles() && roles().length === 0) {
@@ -32,11 +32,11 @@
     }
 
     @if (mensajeOperacion()) {
-    <p role="status">{{ mensajeOperacion() }}</p>
+    <p class="mensaje" role="status">{{ mensajeOperacion() }}</p>
     }
 
     @if (errorOperacion()) {
-    <p role="alert">{{ errorOperacion() }}</p>
+    <p class="mensaje" role="alert">{{ errorOperacion() }}</p>
     }
 
     @if (cargando()) {
@@ -44,11 +44,11 @@
     }
 
     @if (errorListado()) {
-    <p role="alert">{{ errorListado() }}</p>
+    <p class="mensaje" role="alert">{{ errorListado() }}</p>
     }
 
     @if (!cargando() && !errorListado()) {
-    <div class="tabla-contenedor">
+    <div class="tabla-contenedor" tabindex="0" role="region" aria-label="Usuarios">
         <table>
             <thead>
                 <tr>
@@ -69,16 +69,21 @@
                     <td>{{ usuario.apellido }}</td>
                     <td>{{ usuario.email }}</td>
                     <td>{{ mostrarRoles(usuario) }}</td>
-                    <td>{{ usuario.activo ? 'Activo' : 'Inactivo' }}</td>
+                    <td>
+                        <span class="rounded-md px-2 py-1 text-xs font-semibold"
+                            [class]="usuario.activo ? 'bg-green-50 text-green-800' : 'bg-gray-100 text-gray-700'">
+                            {{ usuario.activo ? 'Activo' : 'Inactivo' }}
+                        </span>
+                    </td>
                     <td class="acciones">
                         @if (usuario.activo) {
-                        <button type="button" (click)="abrirFormulario(usuario)"
+                        <button class="boton boton-editar" type="button" (click)="abrirFormulario(usuario)"
                             [disabled]="cargando() || cargandoRoles() || !!errorRoles() || guardando() || procesandoId() !== null">
                             Editar
                         </button>
                         }
 
-                        <button type="button" (click)="cambiarEstadoUsuario(usuario)"
+                        <button class="boton" [class]="usuario.activo ? 'boton-peligro' : 'boton-reactivar'" type="button" (click)="cambiarEstadoUsuario(usuario)"
                             [disabled]="cargando() || guardando() || procesandoId() !== null">
                             @if (procesandoId() === usuario.id) {
                             Procesando...
@@ -99,13 +104,13 @@
 
     <!-- Paginación -->
     <div class="paginacion">
-        <button type="button" (click)="cambiarPagina(-1)" [disabled]="paginaActual() === 0 || cargando()">
+        <button class="boton" type="button" (click)="cambiarPagina(-1)" [disabled]="paginaActual() === 0 || cargando()">
             Anterior
         </button>
 
         <span>Página {{ totalPaginas() === 0 ? 0 : paginaActual() + 1 }} de {{ totalPaginas() }}</span>
 
-        <button type="button" (click)="cambiarPagina(1)"
+        <button class="boton" type="button" (click)="cambiarPagina(1)"
             [disabled]="paginaActual() + 1 >= totalPaginas() || cargando()">
             Siguiente
         </button>
@@ -113,39 +118,39 @@
     }
 
     <!-- Formulario para registrar o editar -->
-    <dialog #dialogUsuario (cancel)="cancelarDialogo($event)" aria-labelledby="tituloUsuario">
+    <dialog class="dialogo" #dialogUsuario (cancel)="cancelarDialogo($event)" aria-labelledby="tituloUsuario">
         <h2 id="tituloUsuario">{{ idEditando === null ? 'Registrar usuario' : 'Editar usuario' }}</h2>
 
-        <form #formUsuario="ngForm" (ngSubmit)="guardarUsuario()">
+        <form class="space-y-4" #formUsuario="ngForm" (ngSubmit)="guardarUsuario()">
             <div class="campo">
                 <label for="nombre">Nombre</label>
-                <input id="nombre" type="text" name="nombre" [(ngModel)]="nombre" maxlength="100" required />
+                <input class="control" id="nombre" type="text" name="nombre" [(ngModel)]="nombre" maxlength="100" required />
             </div>
 
             <div class="campo">
                 <label for="apellido">Apellido</label>
-                <input id="apellido" type="text" name="apellido" [(ngModel)]="apellido" maxlength="100" required />
+                <input class="control" id="apellido" type="text" name="apellido" [(ngModel)]="apellido" maxlength="100" required />
             </div>
 
             <div class="campo">
                 <label for="email">Correo electrónico</label>
-                <input id="email" type="email" name="email" [(ngModel)]="email" maxlength="150" required />
+                <input class="control" id="email" type="email" name="email" [(ngModel)]="email" maxlength="150" required />
             </div>
 
             <div class="campo">
                 <label for="password">Contraseña {{ idEditando === null ? '' : '(opcional)' }}</label>
-                <input id="password" type="password" name="password" [(ngModel)]="password"
+                <input class="control" id="password" type="password" name="password" [(ngModel)]="password"
                     [required]="idEditando === null" minlength="6" autocomplete="new-password" />
                 @if (idEditando !== null) {
-                <small>Déjala vacía para mantener la contraseña actual.</small>
+                <small class="text-xs text-gray-600">Déjala vacía para mantener la contraseña actual.</small>
                 }
             </div>
 
-            <fieldset class="campo">
-                <legend>Roles</legend>
+            <fieldset class="campo rounded-md border border-gray-200 px-3 pb-3">
+                <legend class="px-1">Roles</legend>
                 @for (rol of roles(); track rol.id) {
-                <label class="rol">
-                    <input type="checkbox" [ngModel]="rolesSeleccionados.includes(rol.id)"
+                <label class="flex items-center gap-2">
+                    <input class="size-4 accent-orange-600" type="checkbox" [ngModel]="rolesSeleccionados.includes(rol.id)"
                         (ngModelChange)="cambiarRol(rol.id, $event)" [name]="'rol-' + rol.id" />
                     {{ nombreRol(rol.nombre) }}
                 </label>
@@ -153,16 +158,16 @@
             </fieldset>
 
             @if (errorFormulario()) {
-            <p role="alert">{{ errorFormulario() }}</p>
+            <p class="mensaje" role="alert">{{ errorFormulario() }}</p>
             }
 
             <div class="botones-formulario">
-                <button type="submit"
+                <button class="boton boton-primario" type="submit"
                     [disabled]="formUsuario.invalid || guardando() || rolesSeleccionados.length === 0 || !nombre.trim() || !apellido.trim() || !email.trim()">
                     {{ guardando() ? 'Guardando...' : (idEditando === null ? 'Guardar usuario' : 'Guardar cambios') }}
                 </button>
 
-                <button type="button" (click)="cerrarFormulario()" [disabled]="guardando()">
+                <button class="boton" type="button" (click)="cerrarFormulario()" [disabled]="guardando()">
                     Cancelar
                 </button>
             </div>

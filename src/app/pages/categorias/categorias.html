@@ -1,23 +1,23 @@
-<section class="categorias">
-    <h1>Gestión de Categorías</h1>
+<section class="mx-auto max-w-7xl space-y-5">
+    <h1 class="titulo-pagina">Gestión de Categorías</h1>
 
     <!-- Barra de búsqueda y filtro por estado -->
     <form class="filtros" (ngSubmit)="buscarCategorias()">
-        <input type="search" name="busqueda" [(ngModel)]="busqueda" placeholder="Buscar categoría por nombre"
+        <input class="control" type="search" name="busqueda" [(ngModel)]="busqueda" placeholder="Buscar categoría por nombre"
             aria-label="Buscar categoría por nombre" />
 
-        <select name="estado" aria-label="Filtrar categorías por estado" [ngModel]="mostrandoActivas"
+        <select class="control" name="estado" aria-label="Filtrar categorías por estado" [ngModel]="mostrandoActivas"
             (ngModelChange)="cambiarVista($event)" [disabled]="cargando() || guardando() || procesandoId() !== null">
             <option [ngValue]="true">Activas</option>
             <option [ngValue]="false">Inactivas</option>
         </select>
 
-        <button type="submit" [disabled]="cargando() || guardando() || procesandoId() !== null">
+        <button class="boton" type="submit" [disabled]="cargando() || guardando() || procesandoId() !== null">
             Buscar
         </button>
 
         @if (busquedaAplicada) {
-        <button type="button" (click)="limpiarBusqueda()" [disabled]="cargando()">
+        <button class="boton" type="button" (click)="limpiarBusqueda()" [disabled]="cargando()">
             Limpiar
         </button>
         }
@@ -25,7 +25,7 @@
 
     <div class="cabecera-listado">
         @if (esAdmin() && mostrandoActivas) {
-        <button type="button" (click)="abrirFormulario()"
+        <button class="boton boton-primario" type="button" (click)="abrirFormulario()"
             [disabled]="cargando() || guardando() || procesandoId() !== null">
             Registrar
         </button>
@@ -36,11 +36,11 @@
 
     <!-- Mensajes del registro y de los cambios de estado -->
     @if (mensajeOperacion()) {
-    <p role="status">{{ mensajeOperacion() }}</p>
+    <p class="mensaje" role="status">{{ mensajeOperacion() }}</p>
     }
 
     @if (errorOperacion()) {
-    <p role="alert">{{ errorOperacion() }}</p>
+    <p class="mensaje" role="alert">{{ errorOperacion() }}</p>
     }
 
     <!-- Consulta de categorías -->
@@ -49,11 +49,11 @@
     }
 
     @if (errorListado()) {
-    <p role="alert">{{ errorListado() }}</p>
+    <p class="mensaje" role="alert">{{ errorListado() }}</p>
     }
 
     @if (!cargando() && !errorListado()) {
-    <div class="tabla-contenedor">
+    <div class="tabla-contenedor" tabindex="0" role="region" aria-label="Categorías">
         <table>
             <thead>
                 <tr>
@@ -73,18 +73,23 @@
                     <td>{{ categoria.id }}</td>
                     <td>{{ categoria.nombre }}</td>
                     <td>{{ categoria.descripcion }}</td>
-                    <td>{{ categoria.activo ? 'Activo' : 'Inactivo' }}</td>
+                    <td>
+                        <span class="rounded-md px-2 py-1 text-xs font-semibold"
+                            [class]="categoria.activo ? 'bg-green-50 text-green-800' : 'bg-gray-100 text-gray-700'">
+                            {{ categoria.activo ? 'Activo' : 'Inactivo' }}
+                        </span>
+                    </td>
 
                     @if (esAdmin()) {
                     <td class="acciones">
                         @if (categoria.activo) {
-                        <button type="button" (click)="abrirFormulario(categoria)"
+                        <button class="boton boton-editar" type="button" (click)="abrirFormulario(categoria)"
                             [disabled]="cargando() || guardando() || procesandoId() !== null">
                             Editar
                         </button>
                         }
 
-                        <button type="button" (click)="cambiarEstadoCategoria(categoria)"
+                        <button class="boton" [class]="categoria.activo ? 'boton-peligro' : 'boton-reactivar'" type="button" (click)="cambiarEstadoCategoria(categoria)"
                             [disabled]="cargando() || guardando() || procesandoId() !== null">
                             @if (procesandoId() === categoria.id) {
                             Procesando...
@@ -108,7 +113,7 @@
 
     <!-- Paginación -->
     <div class="paginacion">
-        <button type="button" (click)="cambiarPagina(-1)" [disabled]="paginaActual() === 0 || cargando()">
+        <button class="boton" type="button" (click)="cambiarPagina(-1)" [disabled]="paginaActual() === 0 || cargando()">
             Anterior
         </button>
 
@@ -116,7 +121,7 @@
             Página {{ totalPaginas() === 0 ? 0 : paginaActual() + 1 }} de {{ totalPaginas() }}
         </span>
 
-        <button type="button" (click)="cambiarPagina(1)"
+        <button class="boton" type="button" (click)="cambiarPagina(1)"
             [disabled]="paginaActual() + 1 >= totalPaginas() || cargando()">
             Siguiente
         </button>
@@ -124,32 +129,32 @@
     }
 
     <!-- Formulario -->
-    <dialog #dialogCategoria (cancel)="cancelarDialogo($event)" aria-labelledby="titulo-modal">
+    <dialog class="dialogo" #dialogCategoria (cancel)="cancelarDialogo($event)" aria-labelledby="titulo-modal">
         <h2 id="titulo-modal">{{ idEditando === null ? 'Registrar categoría' : 'Editar categoría' }}</h2>
 
-        <form #formCategoria="ngForm" (ngSubmit)="guardarCategoria()">
+        <form class="space-y-4" #formCategoria="ngForm" (ngSubmit)="guardarCategoria()">
             <div class="campo">
                 <label for="nombre">Nombre</label>
-                <input id="nombre" type="text" name="nombre" [(ngModel)]="nombre" maxlength="100" required />
+                <input class="control" id="nombre" type="text" name="nombre" [(ngModel)]="nombre" maxlength="100" required />
             </div>
 
             <div class="campo">
                 <label for="descripcion">Descripción</label>
-                <textarea id="descripcion" name="descripcion" [(ngModel)]="descripcion" maxlength="500" rows="3"
+                <textarea class="control" id="descripcion" name="descripcion" [(ngModel)]="descripcion" maxlength="500" rows="3"
                     required></textarea>
             </div>
 
             @if (errorFormulario()) {
-            <p role="alert">{{ errorFormulario() }}</p>
+            <p class="mensaje" role="alert">{{ errorFormulario() }}</p>
             }
 
             <div class="botones-formulario">
-                <button type="submit"
+                <button class="boton boton-primario" type="submit"
                     [disabled]="formCategoria.invalid || guardando() || !nombre.trim() || !descripcion.trim()">
                     {{ guardando() ? 'Guardando...' : (idEditando === null ? 'Guardar categoría' : 'Guardar cambios') }}
                 </button>
 
-                <button type="button" (click)="cerrarFormulario()" [disabled]="guardando()">
+                <button class="boton" type="button" (click)="cerrarFormulario()" [disabled]="guardando()">
                     Cancelar
                 </button>
             </div>

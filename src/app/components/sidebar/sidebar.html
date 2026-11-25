@@ -1,41 +1,40 @@
-<aside class="barra-lateral">
-    <h2>MaxiGo POS</h2>
+<aside class="flex flex-col border-b border-gray-200 bg-white md:min-h-dvh md:w-60 md:border-r md:border-b-0">
+    <h2 class="m-4 border-l-4 border-orange-500 pl-3 text-xl font-bold tracking-tight md:mt-6">MaxiGo POS</h2>
 
-    <nav aria-label="Navegación principal">
-        <a routerLink="/" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="activo">
+    <nav class="grid grid-cols-2 gap-1 px-4 pb-4 sm:grid-cols-3 md:grid-cols-1" aria-label="Navegación principal">
+        <a class="enlace" ariaCurrentWhenActive="page" routerLink="/" [routerLinkActiveOptions]="{ exact: true }" routerLinkActive="activo">
             Inicio
         </a>
 
-        <a routerLink="/categorias" routerLinkActive="activo">
+        <a class="enlace" ariaCurrentWhenActive="page" routerLink="/categorias" routerLinkActive="activo">
             Categorías
         </a>
 
-        <a routerLink="/productos" routerLinkActive="activo">
+        <a class="enlace" ariaCurrentWhenActive="page" routerLink="/productos" routerLinkActive="activo">
             Productos
         </a>
 
-        <a routerLink="/ventas" routerLinkActive="activo">
+        <a class="enlace" ariaCurrentWhenActive="page" routerLink="/ventas" routerLinkActive="activo">
             Ventas
         </a>
         @if (auth.usuario()?.roles?.includes('ROLE_ADMIN')) {
-        <a routerLink="/usuarios" routerLinkActive="activo">
+        <a class="enlace" ariaCurrentWhenActive="page" routerLink="/usuarios" routerLinkActive="activo">
             Usuarios
         </a>
 
-        <a routerLink="/reportes" routerLinkActive="activo">
+        <a class="enlace" ariaCurrentWhenActive="page" routerLink="/reportes" routerLinkActive="activo">
             Reportes
         </a>
         }
     </nav>
 
-    <div class="usuario">
+    <div class="mt-auto border-t border-gray-200 p-4 text-sm">
         @if (auth.usuario(); as usuario) {
-        <p><strong>Usuario</strong></p>
-        <p class="correo">{{ usuario.email }}</p>
-        <p>{{ usuario.roles.includes('ROLE_ADMIN') ? 'Administrador' : 'Cajero' }}</p>
+        <p class="font-semibold wrap-anywhere">{{ usuario.email }}</p>
+        <p class="mt-1 text-gray-600">{{ usuario.roles.includes('ROLE_ADMIN') ? 'Administrador' : 'Cajero' }}</p>
         }
 
-        <button type="button" (click)="cerrarSesion()">
+        <button class="boton mt-3 w-full" type="button" (click)="cerrarSesion()">
             Cerrar sesión
         </button>
     </div>
